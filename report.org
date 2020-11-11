@@ -10,6 +10,13 @@ relational algebra evaluator written in the [[https://clojure.org/][Clojure]] pr
 satisfy the requirements for Project Four in the Fall 2020 session of the
 Advanced Databases course offerred at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
 * Implementation Details
+** Parser
+** Evaluator
+** REPL
+** Input Format
+** Output
+*** Console
+*** File
 * Performance
 * Drawbacks
 * Future Work
