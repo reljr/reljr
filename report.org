@@ -1,0 +1,16 @@
+#+TITLE: CIS6930 -- Project Four
+#+AUTHOR: Elijah Malaby
+#+AUTHOR: Luciano Laratelli
+#+LATEX_HEADER: \usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+#+OPTIONS: date:nil
+
+* Introduction
+This document presents details regarding the implementation of =reljr=, a
+relational algebra evaluator written in the [[https://clojure.org/][Clojure]] programming language to
+satisfy the requirements for Project Four in the Fall 2020 session of the
+Advanced Databases course offerred at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
+* Implementation Details
+* Performance
+* Drawbacks
+* Future Work
+* Conclusion
