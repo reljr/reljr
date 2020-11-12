@@ -31,12 +31,12 @@ TopLevelOperator    = Projection     |
                       RenameRelation |
                       RenameColumn |
                       OrderBy        |
-                      GroupBy        |
+                      GroupBy        
                       
 
 
 
-Projection          = projection_token ColumnOrColumnComma RAExpression
+Projection          = projection_token ColumnOrColumnComma
 
 projection_token    = 'π' | 'pi' | 'project'
 
@@ -50,7 +50,7 @@ column_token        = #'\w'
 
 
 
-Selection           = selection_token BooleanExpression RAExpression
+Selection           = selection_token BooleanExpression
 
 selection_token     = 'σ' | 'sigma' | 'select'
 
@@ -60,12 +60,12 @@ selection_token     = 'σ' | 'sigma' | 'select'
 rename_token        = 'ρ' | 'rho' | 'rename'
 
 
-RenameRelation      = rename_token relation_name RAExpression
+RenameRelation      = rename_token relation_name
 
 
 
 
-RenameColumn        = rename_token ColToColOrCTCComma RAExpression
+RenameColumn        = rename_token ColToColOrCTCComma
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
 ColToColOrCTCComma  = column_token left_arrow column_token                        |
