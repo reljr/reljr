@@ -20,9 +20,9 @@ S                          = RAExpression
 RAExpression               = '(' RAExpression ')'                               |
                              '(' RAExpression ')' TopLevelOperator RAExpression |
                              relation_name                                      |
-                             relation_name MidLevelOperator RAExpression        |
-                             TopLevelOperator RAExpression                      |
-                             TopLevelOperator RAExpression MidLevelOperator RAExpression
+                             TopLevelOperator RAExpression                      
+                             (* relation_name MidLevelOperator RAExpression        | *)
+                             (* TopLevelOperator RAExpression MidLevelOperator RAExpression *)
 
 relation_name              =  #"\w"
 
@@ -73,7 +73,7 @@ right_arrow                = '->' | '→'
 
 
 OrderBy                    = order_by_token ColumnOrColumnComma |
-          order_by_token DirectionalColumnOrDCComma
+                             order_by_token DirectionalColumnOrDCComma
 
 order_by_token             = 'τ' | 'tau' | 'order by'
 
@@ -84,12 +84,27 @@ DirectionalColumnOrDCComma = column_token asc_or_desc |
 asc_or_desc                = 'asc' | 'ASC' | 'desc' | 'DESC'
 
 
-MidLevelOperator           = Intersection |
-                             Union        |
-                             Division     |
-                             Subtraction  |
-                             CrossProduct |
-                             NaturalJoin 
+
+
+GroupBy                    = group_by_token ';'AggregateOrAggComma |
+                             group_by_token ColumnOrColumnComma ';' AggregateOrAggComma
+
+group_by_token             = 'γ' | 'gamma' | 'group by'
+
+AggregateOrAggComma        = 'COUNT' '(' '*' ')' right_arrow column_token                         |
+                             'COUNT' '(' '*' ')' right_arrow column_token ',' AggregateOrAggComma |
+                             aggregate_token '(' column_token ')' right_arrow column_token        |
+                             aggregate_token '(' column_token ')' right_arrow column_token ',' AggregateOrAggComma 
+
+aggregate_token = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' | 'min' | 'max' | 'sum' | 'avg' 
+
+
+(* midleveloperator           = Intersection | *)
+(*                              Union        | *)
+(*                              Division     | *)
+(*                              Subtraction  | *)
+(*                              CrossProduct | *)
+(*                              NaturalJoin  *)
 
 
 ColumnOrColumnComma        = Column | Column ',' ColumnOrColumnComma
