@@ -1,0 +1,87 @@
+(* grammar conventions:
+
+- CamelCase is used for NonTerminals
+- snake_case is used for terminals
+when a NonTerminal introduces a new terminal, it is immediately defined
+after that rule.
+
+NonTerminals are defined in the order they are introduced, unless they are
+common to more than one NonTerminal. In that case, they are defined at the
+bottom of the grammar.
+
+If any NonTerminals share a terminal, the terminal is defined before the
+NonTerminals.
+
+grammar sourced from the railroad diagrams at
+https://dbis-uibk.github.io/relax/help#relalg-syntax *)
+
+S                   = RAExpression
+
+RAExpression       = '(' RAExpression ')'                               |
+                      '(' RAExpression ')' TopLevelOperator RAExpression |
+                      relation_name                                      |
+                      (*relation_name MidLevelOperator RAExpression        |*)
+                      TopLevelOperator RAExpression                      (*|*)
+                      (*TopLevelOperator RAExpression MidLevelOperator RAExpression*)
+
+relation_name       =  #"\w";
+
+TopLevelOperator    = Projection     |
+                      Selection      |
+                      RenameRelation |
+                      RenameColumn
+                      (*|
+                      OrderBy        |
+                      GroupBy        |*)
+                      
+
+
+
+Projection          = projection_token ColumnOrColumnComma RAExpression
+
+projection_token    = 'π' | 'pi' | 'project'
+
+ColumnOrColumnComma = Column | Column ',' ColumnOrColumnComma
+
+Column              = column_token |
+                      column_token '.' relation_name
+
+column_token        = #'\w'
+
+
+
+
+Selection           = selection_token BooleanExpression RAExpression
+
+selection_token     = 'σ' | 'sigma' | 'select'
+
+
+
+
+rename_token      = 'ρ' | 'rho' | 'rename'
+
+
+RenameRelation      = rename_token relation_name RAExpression
+
+
+
+
+RenameColumn        = rename_token ColToColOrCTCComma RAExpression
+
+(* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
+ColToColOrCTCComma  = column_token left_arrow column_token                        |
+                      column_token right_arrow column_token                       |
+                      column_token left_arrow column_token ',' ColToColorCTCComma |
+                      column_token right_arrow column_token ',' ColToColorCTCComma 
+
+left_arrow  = '<-' | '←'
+right_arrow = '->' | '→'
+
+
+(* MidLevelOperator    = Intersection |
+                     Union        |
+                     Division     |
+                     Subtraction  |
+                     CrossProduct |
+                     NaturalJoin *)
+
