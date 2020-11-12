@@ -3,4 +3,3 @@
 
 (def relational-algebra-parser
   (insta/parser (clojure.java.io/resource "RAParser.bnf")))
-
