@@ -47,10 +47,29 @@ Selection                  = selection_token BooleanExpression
 
 selection_token            = 'σ' | 'sigma' | 'select'
 
-BooleanExpression          = '(' BooleanExpression ')' |
-                             not_token BooleanExpression |
+BooleanExpression          = '(' BooleanExpression ')'                     |
+                             not_token BooleanExpression                   |
+                             BooleanExpression and_token BooleanExpression |
+                             BooleanExpression or_token BooleanExpression  |
+                             Column magnitude_comp_token number            |
+                             number magnitude_comp_token Column            |
+                             EqualityComp
 
 not_token                  = '¬' | 'not'
+
+and_token                  = '∧' | '&&' | 'and'       
+or_token                   = '∨' | '||' | 'or'       
+
+
+magnitude_comp_token       = '>' | '>=' | '≥' | '<' | '<=' | '≤'
+
+EqualityComp               = Column equality_token Column |
+                             Column equality_token number |
+                             number equality_token Column |
+                             number equality_token number
+
+equality_token             = '=' | '!=' | '≠'
+
 
 
 
@@ -67,8 +86,8 @@ RenameColumn               = rename_token ColToColOrCTCComma
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
 ColToColOrCTCComma         = Column left_arrow column_token                        |
                              Column right_arrow column_token                       |
-                             Column left_arrow column_token ',' ColToColorCTCComma |
-                             Column right_arrow column_token ',' ColToColorCTCComma 
+                             Column left_arrow column_token ',' ColToColOrCTCComma |
+                             Column right_arrow column_token ',' ColToColOrCTCComma 
 
 left_arrow                 = '<-' | '←'
 right_arrow                = '->' | '→'
@@ -100,10 +119,10 @@ AggregateOrAggComma        = 'COUNT' '(' '*' ')' right_arrow column_token       
                              aggregate_token '(' column_token ')' right_arrow column_token        |
                              aggregate_token '(' column_token ')' right_arrow column_token ',' AggregateOrAggComma 
 
-aggregate_token = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' | 'min' | 'max' | 'sum' | 'avg' 
+aggregate_token            = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' | 'min' | 'max' | 'sum' | 'avg' 
 
 
-(* midleveloperator           = Intersection | *)
+(* midleveloperator        = Intersection | *)
 (*                              Union        | *)
 (*                              Division     | *)
 (*                              Subtraction  | *)
@@ -117,3 +136,5 @@ Column                     = column_token |
                              column_token '.' relation_name
 
 column_token               = #'\w'
+
+number                     = #"\d+"
