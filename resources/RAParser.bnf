@@ -47,6 +47,10 @@ Selection                  = selection_token BooleanExpression
 
 selection_token            = 'σ' | 'sigma' | 'select'
 
+BooleanExpression          = '(' BooleanExpression ')' |
+                             not_token BooleanExpression |
+
+not_token                  = '¬' | 'not'
 
 
 
@@ -61,10 +65,10 @@ RenameRelation             = rename_token relation_name
 RenameColumn               = rename_token ColToColOrCTCComma
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
-ColToColOrCTCComma         = column_token left_arrow column_token                        |
-                             column_token right_arrow column_token                       |
-                             column_token left_arrow column_token ',' ColToColorCTCComma |
-                             column_token right_arrow column_token ',' ColToColorCTCComma 
+ColToColOrCTCComma         = Column left_arrow column_token                        |
+                             Column right_arrow column_token                       |
+                             Column left_arrow column_token ',' ColToColorCTCComma |
+                             Column right_arrow column_token ',' ColToColorCTCComma 
 
 left_arrow                 = '<-' | '←'
 right_arrow                = '->' | '→'
@@ -78,8 +82,8 @@ OrderBy                    = order_by_token ColumnOrColumnComma |
 order_by_token             = 'τ' | 'tau' | 'order by'
 
 (* a column that is 'directional' is one that is followed by asc[ending] or desc[ending] *)
-DirectionalColumnOrDCComma = column_token asc_or_desc |
-                             column_token asc_or_desc ',' DirectionalColumnOrDCComma 
+DirectionalColumnOrDCComma = Column asc_or_desc |
+                             Column asc_or_desc ',' DirectionalColumnOrDCComma 
 
 asc_or_desc                = 'asc' | 'ASC' | 'desc' | 'DESC'
 
