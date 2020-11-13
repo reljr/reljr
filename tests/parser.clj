@@ -3,11 +3,11 @@
              [parser.core :as p]
              [instaparse.core :as insta]))
 
-(t/deftest projection
+(t/deftest RAprojection
   (t/testing "Projection" (t/is (= (p/relational-algebra-parser "π Customer.firstname, surname ( Customer )")
                                    '([:Projection [:Column "Customer" "firstname"] [:Column "surname"] "Customer"])))))
 
-(t/deftest selection
+(t/deftest RAselection
   (t/testing "Selection"
     (t/is (= (p/relational-algebra-parser "sigma firstname = 'Bob'( Customer )")
              '([:Selection [:EqualsExpr [:Column "firstname"] [:string "'Bob'"]] "Customer"])))
@@ -26,16 +26,16 @@
                  [:EqualsExpr [:Column "id"] [:number "42"]]]
                 "Customer"])))))
 
-(t/deftest rename-relation
+(t/deftest RArename-relation
   (t/testing "Rename Relation"
     (t/is (=
-           (p/relational-algebra-parser "π a.id, a.firstname ( ρ a ( Customer ) )"))
-          '(([:Projection
+           (p/relational-algebra-parser "π a.id, a.firstname ( ρ a ( Customer ) )")
+           '([:Projection
               [:Column "a" "id"]
               [:Column "a" "firstname"]
               [:RenameRelation "a" "Customer"]])))))
 
-(t/deftest rename-column
+(t/deftest RArename-column
   (t/testing "Rename Column"
     (t/is (= (p/relational-algebra-parser "ρ myId->id, foobar->firstname (π id, firstname ( Customer ) )")
              '([:RenameColumn
@@ -45,7 +45,7 @@
                 "firstname"
                 [:Projection [:Column "id"] [:Column "firstname"] "Customer"]])))))
 
-(t/deftest order-by
+(t/deftest RAorder-by
   (t/testing "Order By"
     (t/is (= (p/relational-algebra-parser "tau a asc, b desc (R)")
              '([:OrderBy [:Column "a"] [:Column "b"] "R"])))
@@ -54,7 +54,7 @@
                 [:Column "firstname"]
                 [:Projection [:Column "id"] [:Column "firstname"] "Customer"]])))))
 
-(t/deftest group-by
+(t/deftest RAgroup-by
   (t/testing "Group By"
     (t/is (= (p/relational-algebra-parser "gamma a ; count(*)->x  ( R ) ")
              '([:GroupBy [:Column "a"] [:AggregateCountStar "x"] "R"])))
