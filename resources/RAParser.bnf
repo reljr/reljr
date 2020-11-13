@@ -102,7 +102,6 @@ LessEqualExpr                = ColNumOrString <le_token> ColNumOrString
 
 le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace> 
 
-string                       = #"'[\w\s]*'"
 
 
 
@@ -137,7 +136,7 @@ asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <a
 
 
 
-GroupBy                      = <group_by_token> <semicolon> Aggregate <whitespace> RAExpression |
+GroupBy                      = <group_by_token> Aggregate <whitespace> RAExpression |
                                <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> RAExpression
 
 group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group_by_token> <whitespace>
@@ -223,7 +222,9 @@ subtraction_token            = "except" | "-" | "\\" | <whitespace> <subtraction
 
 Column                       = column_token | column_token <dot> relation_name
 
-<column_token>               = #"\w+" 
+string                       = #"'[\w\s\-_]*'"
+
+<column_token>               = #"[\w_]*"
 
 number                       = #"\d+"
 
