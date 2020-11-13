@@ -3,7 +3,8 @@
              [parser.core :as p]
              [instaparse.core :as insta]))
 
-(p/relational-algebra-parser "sigma firstname = 'Bob'( Customer )")
+(t/testing "Projection" (t/is (= (p/relational-algebra-parser "π Customer.firstname, surname ( Customer )")
+                                 '([:Projection [:Column "Customer" "firstname"] [:Column "surname"] "Customer"]))))
 
 (t/testing "Selection"
   (t/is (= (p/relational-algebra-parser "sigma firstname = 'Bob'( Customer )")
@@ -23,8 +24,13 @@
                [:EqualsExpr [:Column "id"] [:number "42"]]]
               "Customer"]))))
 
-(t/testing "Projection" (t/is (= (p/relational-algebra-parser "π Customer.firstname, surname ( Customer )")
-                                 '([:Projection [:Column "Customer" "firstname"] [:Column "surname"] "Customer"]))))
+(t/testing "Rename Relation"
+  (t/is (=
+         (p/relational-algebra-parser "π a.id, a.firstname ( ρ a ( Customer ) )"))
+        '(([:Projection
+            [:Column "a" "id"]
+            [:Column "a" "firstname"]
+            [:RenameRelation "a" "Customer"]]))))
 
 (t/testing "Rename Column"
   (t/is (= (p/relational-algebra-parser "ρ myId->id, foobar->firstname (π id, firstname ( Customer ) )")
@@ -35,6 +41,38 @@
               "firstname"
               [:Projection [:Column "id"] [:Column "firstname"] "Customer"]]))))
 
-(p/relational-algebra-parser "π a.id, a.firstname ( ρ a ( Customer ) )")
+(t/testing "Order By"
+  (t/is (= (p/relational-algebra-parser "tau a asc, b desc (R)")
+           '([:OrderBy [:Column "a"] [:Column "b"] "R"])))
+  (t/is (= (p/relational-algebra-parser "τ firstname desc (π id, firstname ( Customer ) )")
+           '([:OrderBy
+              [:Column "firstname"]
+              [:Projection [:Column "id"] [:Column "firstname"] "Customer"]]))))
 
-(t/run-all-tests)
+(t/testing "Group By"
+  (t/is (= (p/relational-algebra-parser "gamma a ; count(*)->x  ( R ) ")
+           '([:GroupBy [:Column "a"] [:AggregateCountStar "x"] "R"])))
+  (t/is (= (p/relational-algebra-parser "γ a, b ; sum(c)->x ( Customer )")
+           '([:GroupBy
+              [:Column "a"]
+              [:Column "b"]
+              [:AggregateSum [:Column "c"] "x"]
+              "Customer"])))
+  (t/is (= (p/relational-algebra-parser "γ a, b ; sum(c)->x, sum(d)->y ( Customer )")
+           '([:GroupBy
+              [:Column "a"]
+              [:Column "b"]
+              [:AggregateSum [:Column "c"] "x"]
+              [:AggregateSum [:Column "d"] "y"]
+              "Customer"])))
+  (t/is (= (p/relational-algebra-parser "γ a, b ; count(*)-> z, count(c)->a, min(c)->b, max(c)->c, sum(c)->d, avg(d)->e ( Customer )")
+           '([:GroupBy
+              [:Column "a"]
+              [:Column "b"]
+              [:AggregateCountStar "z"]
+              [:AggregateCount [:Column "c"] "a"]
+              [:AggregateMin [:Column "c"] "b"]
+              [:AggregateMax [:Column "c"] "c"]
+              [:AggregateSum [:Column "c"] "d"]
+              [:AggregateAvg [:Column "d"] "e"]
+              "Customer"]))))
