@@ -79,3 +79,43 @@
               [:AggregateSum [:Column "c"] "d"]
               [:AggregateAvg [:Column "d"] "e"]
               "Customer"]))))
+
+(t/deftest RACrossProduct (t/is (= (p/relational-algebra-parser "pi a B * pi c D")
+                                   '([:Projection
+                                      [:Column "a"]
+                                      [:CrossProduct "B" [:Projection [:Column "c"] "D"]]]))))
+
+(t/deftest RANaturalJoin (t/is (= (p/relational-algebra-parser "ρ a ( Customer )⋈ sigma a.name < b.name ( ρ b ( Customer ) )")
+                                  '([:RenameRelation
+                                     "a"
+                                     [:NaturalJoin
+                                      "Customer"
+                                      [:Selection
+                                       [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
+                                       [:RenameRelation "b" "Customer"]]]]))))
+
+(t/deftest RADivision
+  (t/is
+   (= (p/relational-algebra-parser " ( Customer ) ÷ ( Customer ) ")
+      '([:Division "Customer" "Customer"]))))
+
+(t/deftest RAIntersection
+  (t/is
+   (= (p/relational-algebra-parser "( Customer ) ∩ ( Customer )")
+      '([:Intersection "Customer" "Customer"]))))
+
+(t/deftest RAUnion
+  (t/is
+   (= (p/relational-algebra-parser " ( Customer ) ∪ ( Customer ) ")
+      '([:Union "Customer" "Customer"]))))
+
+(t/deftest RASubtraction
+  (t/is
+   (=
+    (p/relational-algebra-parser " ( pi firstname ( Customer ) ) - ( rho lastname->test ( pi lastname ( Customer ) ) ) ")
+    '([:Subtraction
+       [:Projection [:Column "firstname"] "Customer"]
+       [:RenameColumn
+        [:Column "lastname"]
+        "test"
+        [:Projection [:Column "lastname"] "Customer"]]]))))
