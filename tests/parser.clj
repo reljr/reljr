@@ -123,3 +123,105 @@
         [:Column "lastname"]
         "test"
         [:Projection [:Column "lastname"] "Customer"]]]))))
+
+(t/deftest RAComplexExamples
+  (t/is
+   (=
+    (p/relational-algebra-parser "pi Suppliers.sname (Suppliers × (π Catalog.sid (σ color='red' (Parts × Catalog))))")
+    '([:Projection
+       [:Column "Suppliers" "sname"]
+       [:CrossProduct
+        "Suppliers"
+        [:Projection
+         [:Column "Catalog" "sid"]
+         [:Selection
+          [:EqualsExpr [:Column "color"] [:string "'red'"]]
+          [:CrossProduct "Parts" "Catalog"]]]]])))
+  (t/is
+   (=
+    (p/relational-algebra-parser " π Catalog.sid (σ num_red_parts=red_count (γ Catalog.sid, num_red_parts; count(Catalog.sid) -> red_count (π Catalog.sid, Catalog.pid, Parts.color, num_red_parts (σ Parts.color = 'red' and Catalog.pid = Parts.pid (Catalog × Parts * (gamma count(Parts.pid) -> num_red_parts  (σ Parts.color='red' (Parts)))))))) ")
+    '([:Projection
+       [:Column "Catalog" "sid"]
+       [:Selection
+        [:EqualsExpr [:Column "num_red_parts"] [:Column "red_count"]]
+        [:GroupBy
+         [:Column "Catalog" "sid"]
+         [:Column "num_red_parts"]
+         [:AggregateCount [:Column "Catalog" "sid"] "red_count"]
+         [:Projection
+          [:Column "Catalog" "sid"]
+          [:Column "Catalog" "pid"]
+          [:Column "Parts" "color"]
+          [:Column "num_red_parts"]
+          [:Selection
+           [:AndExpr
+            [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
+            [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]]
+           [:CrossProduct
+            "Catalog"
+            [:CrossProduct
+             "Parts"
+             [:GroupBy
+              [:AggregateCount [:Column "Parts" "pid"] "num_red_parts"]
+              [:Selection
+               [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
+               "Parts"]]]]]]]]])))
+  (t/is
+   (= (p/relational-algebra-parser " π Employees.ename ((σ planecount ≥ 2 (γ Employees.ename ; count(Certified.aid) -> planecount (σ Aircraft.cruisingrange > 1000 (Certified natural join Employees ⋈ Aircraft)))) natural join σ Aircraft.aname='Boeing' (Certified natural join Aircraft ⋈ Employees)) ")
+      '([:Projection
+         [:Column "Employees" "ename"]
+         [:NaturalJoin
+          [:Selection
+           [:GreaterEqualExpr [:Column "planecount"] [:number "2"]]
+           [:GroupBy
+            [:Column "Employees" "ename"]
+            [:AggregateCount [:Column "Certified" "aid"] "planecount"]
+            [:Selection
+             [:GreaterExpr [:Column "Aircraft" "cruisingrange"] [:number "1000"]]
+             [:NaturalJoin "Certified" [:NaturalJoin "Employees" "Aircraft"]]]]]
+          [:Selection
+           [:EqualsExpr [:Column "Aircraft" "aname"] [:string "'Boeing'"]]
+           [:NaturalJoin "Certified" [:NaturalJoin "Aircraft" "Employees"]]]]])))
+
+  (t/is (= (p/relational-algebra-parser " pi Employees.ename, Employees.salary (sigma Employees.salary >= pilotavgsalary (((pi Employees.eid (pi Employees.eid (Employees)) - (pi Certified.eid (Certified))) cross join pi Employees.salary Employees) natural join Employees natural join gamma avg(Employees.salary) -> pilotavgsalary (Certified natural join Employees))) ")
+           '([:Projection
+              [:Column "Employees" "ename"]
+              [:Column "Employees" "salary"]
+              [:Selection
+               [:GreaterEqualExpr
+                [:Column "Employees" "salary"]
+                [:Column "pilotavgsalary"]]
+               [:NaturalJoin
+                [:CrossProduct
+                 [:Projection
+                  [:Column "Employees" "eid"]
+                  [:Subtraction
+                   [:Projection [:Column "Employees" "eid"] "Employees"]
+                   [:Projection [:Column "Certified" "eid"] "Certified"]]]
+                 [:Projection [:Column "Employees" "salary"] "Employees"]]
+                [:NaturalJoin
+                 "Employees"
+                 [:GroupBy
+                  [:AggregateAvg [:Column "Employees" "salary"] "pilotavgsalary"]
+                  [:NaturalJoin "Certified" "Employees"]]]]]])))
+  (t/is (= (p/relational-algebra-parser
+            " pi Catalog.pid (sigma smax=scount ((gamma count(sid)-> smax (Suppliers)) * (gamma Catalog.pid; count(Catalog.sid) -> scount (pi Catalog.sid, Catalog.pid (Suppliers * (sigma Catalog.pid = Parts.pid && Catalog.cost < 200 (Catalog * Parts)))))))")
+           '([:Projection
+              [:Column "Catalog" "pid"]
+              [:Selection
+               [:EqualsExpr [:Column "smax"] [:Column "scount"]]
+               [:CrossProduct
+                [:GroupBy [:AggregateCount [:Column "sid"] "smax"] "Suppliers"]
+                [:GroupBy
+                 [:Column "Catalog" "pid"]
+                 [:AggregateCount [:Column "Catalog" "sid"] "scount"]
+                 [:Projection
+                  [:Column "Catalog" "sid"]
+                  [:Column "Catalog" "pid"]
+                  [:CrossProduct
+                   "Suppliers"
+                   [:Selection
+                    [:AndExpr
+                     [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]
+                     [:LessExpr [:Column "Catalog" "cost"] [:number "200"]]]
+                    [:CrossProduct "Catalog" "Parts"]]]]]]]]))))
