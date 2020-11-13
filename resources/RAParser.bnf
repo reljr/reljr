@@ -9,8 +9,8 @@ NonTerminals are defined in the order they are introduced, unless they are
 common to more than one NonTerminal. In that case, they are defined at the
 bottom of the grammar.
 
-If any NonTerminals share a terminal, the terminal is defined before the
-NonTerminals.
+If more than one similar NonTerminals share a terminal, the terminal is defined
+before the NonTerminals.
 
 grammar sourced from the railroad diagrams at
 https://dbis-uibk.github.io/relax/help#relalg-syntax *)
@@ -27,18 +27,18 @@ https://dbis-uibk.github.io/relax/help#relalg-syntax *)
                                RenameRelation                          /
                                RenameColumn                            /
                                OrderBy                                 /
-                               GroupBy                                 /
+                               GroupBy                                 (*/
                                CrossProduct                            / 
                                NaturalJoin                             /
                                Division                                / 
                                Intersection                            / 
                                Union                                   / 
-                               Subtraction  
+                               Subtraction  *)
                
 
 
 
-Projection                   = <projection_token> Column RAExpression
+Projection                   = <projection_token> ColumnOrColumnComma RAExpression
 
 projection_token             = "π" | "pi" | "project" | <whitespace> <projection_token> <whitespace>
 
@@ -114,22 +114,21 @@ RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RA
 
 
 
-OrderBy                      = <order_by_token> Column RAExpression |
-                               <order_by_token> DirectionalColumnOrDCComma <whitespace> RAExpression
+OrderBy                      = <order_by_token> ColumnOrColumnComma RAExpression |
+                               <order_by_token> DirectionalColumnOrDCComma RAExpression
 
 order_by_token               = "τ" | "tau" | "order by" | <whitespace> <order_by_token> <whitespace>
 
 (* a column that is "directional" is one that is followed by asc[ending] or desc[ending] *)
 <DirectionalColumnOrDCComma> = Column <asc_or_desc> |
-                               Column <asc_or_desc> <comma> DirectionalColumnOrDCComma <whitespace>
+                               Column <asc_or_desc> <comma> DirectionalColumnOrDCComma
 
-asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <order_by_token> <whitespace>
-
+asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <asc_or_desc> <whitespace>
 
 
 
 GroupBy                      = <group_by_token> <semicolon> Aggregate <whitespace> RAExpression |
-                               <group_by_token> Column <semicolon> Aggregate <whitespace> RAExpression
+                               <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> RAExpression
 
 group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group_by_token> <whitespace>
 
@@ -212,9 +211,11 @@ subtraction_token            = "except" | "-" | "\\" | <whitespace> <subtraction
   ; common terminals ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
-Column                       = column_token | column_token <dot> relation_name | Column <comma> Column | <whitespace> Column <whitespace>
+<ColumnOrColumnComma>        = Column | Column <comma> ColumnOrColumnComma
 
-<column_token>               = #"\w+" | <whitespace> <column_token> <whitespace>
+Column                       = column_token | column_token <dot> relation_name
+
+<column_token>               = #"\w+" 
 
 number                       = #"\d+"
 
