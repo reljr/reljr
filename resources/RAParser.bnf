@@ -15,88 +15,90 @@ NonTerminals.
 grammar sourced from the railroad diagrams at
 https://dbis-uibk.github.io/relax/help#relalg-syntax *)
 
-<S>                          = RAExpression
-
-<RAExpression>               = <whitespace> <lpar> <whitespace> RAExpression <whitespace> <rpar> <whitespace>     |
-                             lpar RAExpression rpar <whitespace> TopLevelOperator <whitespace> RAExpression |
-                             <whitespace> relation_name <whitespace>                                      |
-                             <whitespace> TopLevelOperator <whitespace> RAExpression <whitespace>                    
-                             (* relation_name MidLevelOperator RAExpression                           | *)
-                             (* TopLevelOperator RAExpression MidLevelOperator RAExpression *)
-
-<whitespace>                 = #"\s*"
-
-<relation_name>              = #"\w+"
-
-<lpar> = '('
-
-<rpar> = ')'
-
-
-<TopLevelOperator>           = Projection     |
-                             Selection      |
-                             RenameRelation |
-                             RenameColumn   |
-                             OrderBy        |
-                             GroupBy        
-                      
+<S>                        = RAExpression
 
 
 
-Projection                 = projection_token <whitespace> ColumnOrColumnComma
+
+<RAExpression> = <lpar> RAExpression <rpar> /
+                 <whitespace> relation_name <whitespace>              /
+                 Projection                                           /
+                 Selection                                            /
+                 RenameRelation                                       /
+                 RenameColumn                                         /
+                 OrderBy                                              /
+                 GroupBy                                              (*/
+                 CrossProduct                                         / 
+                 NaturalJoin                                          /
+                 Division                                             / 
+                 Intersection                                         / 
+                 Union                                                / 
+                 Subtraction  *)
+               
+
+
+
+Projection                 = <projection_token> <whitespace> ColumnOrColumnComma <whitespace> RAExpression
 
 projection_token           = 'π' | 'pi' | 'project'
 
 
 
 
-Selection                  = <selection_token> <whitespace> BooleanExpression
+Union = RAExpression <whitespace> <union_token> <whitespace> RAExpression
+
+union_token = 'union' | '∪'
+
+
+
+
+Selection                  = <selection_token> <whitespace> BooleanExpression <whitespace> RAExpression
 
 selection_token            = 'σ' | 'sigma' | 'select'
 
 
-<BooleanExpression> = <lpar> BooleanExpression <rpar> |
-                      NotExpr                         |
-                      AndExpr                         |
-                      OrExpr                          |
-                      EqualsExpr                      |
-                      NotEqualsExpr                   |
-                      GreaterExpr                     |
-                      GreaterEqualExpr                |
-                      LessExpr                        |
-                      LessEqualExpr
+<BooleanExpression>        = <lpar> <whitespace> BooleanExpression <rpar> |
+                             NotExpr                         |
+                             AndExpr                         |
+                             OrExpr                          |
+                             EqualsExpr                      |
+                             NotEqualsExpr                   |
+                             GreaterExpr                     |
+                             GreaterEqualExpr                |
+                             LessExpr                        |
+                             LessEqualExpr
 
-NotExpr = not_token <whitespace> BooleanExpression
+NotExpr                    = not_token <whitespace> BooleanExpression
 
 not_token                  = '¬' | 'not'
 
-AndExpr = BooleanExpression <whitespace> and_token <whitespace> BooleanExpression 
+AndExpr                    = BooleanExpression <whitespace> <and_token> <whitespace> BooleanExpression 
 
 and_token                  = '∧' | '&&' | 'and'       
 
-OrExpr = BooleanExpression <whitespace> or_token <whitespace> BooleanExpression 
+OrExpr                     = BooleanExpression <whitespace> <or_token> <whitespace> BooleanExpression 
 
 or_token                   = '∨' | '||' | 'or'       
 
-EqualsExpr = ColNumOrString <whitespace> <'='> <whitespace> ColNumOrString
+EqualsExpr                 = ColNumOrString <whitespace> <'='> <whitespace> ColNumOrString
 
-NotEqualsExpr = ColNumOrString <whitespace> ne_token <whitespace> ColNumOrString
+NotEqualsExpr              = ColNumOrString <whitespace> ne_token <whitespace> ColNumOrString
 
-ne_token = '!=' | '≠'
+ne_token                   = '!=' | '≠'
 
-<ColNumOrString> = Column | number | string
+<ColNumOrString>           = Column | number | string
 
-GreaterExpr = ColNumOrString <whitespace> <'>'> <whitespace> ColNumOrString
+GreaterExpr                = ColNumOrString <whitespace> <'>'> <whitespace> ColNumOrString
 
-GreaterEqualExpr = ColNumOrString <whitespace> <ge_token> <whitespace> ColNumOrString
+GreaterEqualExpr           = ColNumOrString <whitespace> <ge_token> <whitespace> ColNumOrString
 
-ge_token = '>=' | '≥'
+ge_token                   = '>=' | '≥'
 
-LessExpr = ColNumOrString <whitespace> <'<'> <whitespace> ColNumOrString
+LessExpr                   = ColNumOrString <whitespace> <'<'> <whitespace> ColNumOrString
 
-LessEqualExpr = ColNumOrString <whitespace> <le_token> <whitespace> ColNumOrString
+LessEqualExpr              = ColNumOrString <whitespace> <le_token> <whitespace> ColNumOrString
 
-le_token = '<=' | '≤' 
+le_token                   = '<=' | '≤' 
 
 string                     = #"'[\w\s]*'"
 
@@ -106,65 +108,63 @@ string                     = #"'[\w\s]*'"
 rename_token               = 'ρ' | 'rho' | 'rename'
 
 
-RenameRelation             = rename_token relation_name
+RenameRelation             = <rename_token> <whitespace> relation_name RAExpression
 
 
 
 
-RenameColumn               = rename_token ColToColOrCTCComma
+RenameColumn               = <rename_token> <whitespace> ColToColOrCTCComma <whitespace> RAExpression
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
-ColToColOrCTCComma         = Column left_arrow #"\w+"                        |
-                             Column right_arrow #"\w+"                       |
-                             Column left_arrow #"\w+" <comma> ColToColOrCTCComma |
-                             Column right_arrow #"\w+" <comma> ColToColOrCTCComma 
+<ColToColOrCTCComma>         = <whitespace> Column <whitespace> <right_arrow> #"\w+"                           |
+                               <whitespace> Column <whitespace> <right_arrow> #"\w+" <comma> ColToColOrCTCComma 
 
-left_arrow                 = '<-' | '←'
 right_arrow                = '->' | '→'
 
 
-
-
-OrderBy                    = order_by_token ColumnOrColumnComma |
-                             order_by_token DirectionalColumnOrDCComma
+OrderBy                    = order_by_token <whitespace> ColumnOrColumnComma <whitespace> RAExpression |
+                             order_by_token <whitespace> DirectionalColumnOrDCComma <whitespace> RAExpression
 
 order_by_token             = 'τ' | 'tau' | 'order by'
 
 (* a column that is 'directional' is one that is followed by asc[ending] or desc[ending] *)
 DirectionalColumnOrDCComma = Column asc_or_desc |
-                             Column asc_or_desc <comma> DirectionalColumnOrDCComma 
+                             Column asc_or_desc <whitespace> <comma> <whitespace> DirectionalColumnOrDCComma 
 
 asc_or_desc                = 'asc' | 'ASC' | 'desc' | 'DESC'
 
 
+GroupBy                    = group_by_token <whitespace> <SC> AggregateOrAggComma <whitespace> RAExpression |
+                             group_by_token <whitespace> ColumnOrColumnComma <whitespace> <SC> AggregateOrAggComma <whitespace> RAExpression
 
-
-GroupBy                    = group_by_token ';'AggregateOrAggComma |
-                             group_by_token ColumnOrColumnComma ';' AggregateOrAggComma
 
 group_by_token             = 'γ' | 'gamma' | 'group by'
 
-AggregateOrAggComma        = 'COUNT' lpar '*' rpar right_arrow #"\w+"                         |
+AggregateOrAggComma        = 'COUNT' lpar '*' rpar right_arrow #"\w+"                             |
                              'COUNT' lpar '*' rpar right_arrow #"\w+" <comma> AggregateOrAggComma |
-                             aggregate_token lpar #"\w+" rpar right_arrow #"\w+"
+                             aggregate_token lpar #"\w+" rpar right_arrow #"\w+"                  |
                              aggregate_token lpar #"\w+" rpar right_arrow #"\w+" <comma> AggregateOrAggComma 
 
 aggregate_token            = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' | 'min' | 'max' | 'sum' | 'avg' 
 
 
-(* midleveloperator        = Intersection | *)
-(*                              Union        | *)
-(*                              Division     | *)
-(*                              Subtraction  | *)
-(*                              CrossProduct | *)
-(*                              NaturalJoin  *)
 
 
-<ColumnOrColumnComma>       = Column | Column <whitespace> <comma> <whitespace> ColumnOrColumnComma
+<ColumnOrColumnComma>      = Column | Column <whitespace> <comma> <whitespace> ColumnOrColumnComma
 
 Column                     = #"\w+" |
                              #"\w+" <'.'> relation_name
 
 number                     = #"\d+"
 
-<comma> = ','
+<comma>                    = <whitespace> ',' <whitespace>
+
+<whitespace>               = #"\s*"
+
+<relation_name>            = #"\w+"
+
+<lpar>                     = <whitespace> '(' <whitespace>
+
+<rpar>                     = <whitespace> ')' <whitespace>
+
+<SC> = ';'
