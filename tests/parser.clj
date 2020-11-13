@@ -4,6 +4,8 @@
              [instaparse.core :as insta]))
 
 (t/deftest RAProjection
+  (t/is (= (p/relational-algebra-parser "π surname ( Customer )")
+           '([:Projection [:Column "surname"] "Customer"])))
   (t/is (= (p/relational-algebra-parser "π Customer.firstname, surname ( Customer )")
            '([:Projection [:Column "Customer" "firstname"] [:Column "surname"] "Customer"]))))
 
@@ -45,6 +47,8 @@
               [:Projection [:Column "id"] [:Column "firstname"] "Customer"]]))))
 
 (t/deftest RAOrderBy
+  (t/is (= (p/relational-algebra-parser "tau a (R)")
+           '([:OrderBy [:Column "a"] "R"])))
   (t/is (= (p/relational-algebra-parser "tau a asc, b desc (R)")
            '([:OrderBy [:Column "a"] [:Column "b"] "R"])))
   (t/is (= (p/relational-algebra-parser "τ firstname desc (π id, firstname ( Customer ) )")
