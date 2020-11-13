@@ -43,7 +43,6 @@ RAExpression precedence:
 
 <HighPrecedenceBinOp>        = CrossProduct | NaturalJoin |Division | RAExpression
 
-
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
   ;;;;;;;;;;;;;;;;;;;;*)
@@ -137,6 +136,7 @@ asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <a
 
 
 
+
 GroupBy                      = <group_by_token> <semicolon> Aggregate <whitespace> RAExpression |
                                <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> RAExpression
 
@@ -176,7 +176,7 @@ AggregateAvg                 = <avg_token> <lpar> Column <rpar> <right_arrow> co
   ; binary operations ;
   ;;;;;;;;;;;;;;;;;;;;;*)
 
-CrossProduct                 = HighPrecedenceBinOp <cross_product_token>  RAExpression
+CrossProduct                 = HighPrecedenceBinOp <cross_product_token> RAExpression
 
 cross_product_token          = "*" | "cross join" | "×" | <whitespace> <cross_product_token> <whitespace>
 
@@ -233,7 +233,7 @@ number                       = #"\d+"
 
 <whitespace>                 = #"\s*"
 
-<relation_name>              = #"\w+"
+<relation_name>              = <whitespace> #"\w+" <whitespace>
 
 <lpar>                       = <whitespace> "(" <whitespace>
 
