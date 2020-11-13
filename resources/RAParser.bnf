@@ -168,9 +168,44 @@ AggregateAvg                 = <avg_token> <lpar> Column <rpar> <right_arrow> co
   ;;;;;;;;;;;;;;;;;;;;;*)
 
 
-Union                        = RAExpression <whitespace> <union_token> <whitespace> RAExpression
+CrossProduct                 = RAExpression <cross_product_token>  RAExpression
 
-union_token                  = 'union' | '∪'
+cross_product_token          = '*' | 'cross join' | '×' | <whitespace> <cross_product_token> <whitespace>
+
+
+
+
+NaturalJoin                  = RAExpression <natural_join_token> RAExpression
+
+natural_join_token           = '⋈' | 'natural join' | <whitespace> <natural_join_token> <whitespace>
+
+
+
+
+Division                     = RAExpression <division_token> RAExpression
+
+division_token               = '÷' | '/' | <whitespace> <division_token> <whitespace>
+
+
+
+
+Intersection                 = RAExpression <intersection_token> RAExpression
+
+intersection_token           = 'intersect' | '∩' | <whitespace> <intersection_token> <whitespace>
+
+
+
+
+Union                        = RAExpression <union_token> RAExpression
+
+union_token                  = 'union' | '∪' | <whitespace> <union_token> <whitespace>
+
+
+
+
+Subtraction                  = RAExpression <subtraction_token> RAExpression
+
+subtraction_token            = 'except' | '-' | '\' | <whitespace> <subtraction_token> <whitespace>
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; common terminals ;
