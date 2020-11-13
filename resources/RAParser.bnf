@@ -15,18 +15,25 @@ NonTerminals.
 grammar sourced from the railroad diagrams at
 https://dbis-uibk.github.io/relax/help#relalg-syntax *)
 
-S                          = RAExpression
+<S>                          = RAExpression
 
-RAExpression               = '(' RAExpression ')'                               |
-                             '(' RAExpression ')' TopLevelOperator RAExpression |
-                             relation_name                                      |
-                             TopLevelOperator RAExpression                      
-                             (* relation_name MidLevelOperator RAExpression        | *)
+<RAExpression>               = <whitespace> <lpar> <whitespace> RAExpression <whitespace> <rpar> <whitespace>     |
+                             lpar RAExpression rpar <whitespace> TopLevelOperator <whitespace> RAExpression |
+                             <whitespace> relation_name <whitespace>                                      |
+                             <whitespace> TopLevelOperator <whitespace> RAExpression <whitespace>                    
+                             (* relation_name MidLevelOperator RAExpression                           | *)
                              (* TopLevelOperator RAExpression MidLevelOperator RAExpression *)
 
-relation_name              =  #"\w"
+<whitespace>                 = #"\s*"
 
-TopLevelOperator           = Projection     |
+<relation_name>              = #"\w+"
+
+<lpar> = '('
+
+<rpar> = ')'
+
+
+<TopLevelOperator>           = Projection     |
                              Selection      |
                              RenameRelation |
                              RenameColumn   |
@@ -36,39 +43,62 @@ TopLevelOperator           = Projection     |
 
 
 
-Projection                 = projection_token ColumnOrColumnComma
+Projection                 = projection_token <whitespace> ColumnOrColumnComma
 
 projection_token           = 'π' | 'pi' | 'project'
 
 
 
 
-Selection                  = selection_token BooleanExpression
+Selection                  = <selection_token> <whitespace> BooleanExpression
 
 selection_token            = 'σ' | 'sigma' | 'select'
 
-BooleanExpression          = '(' BooleanExpression ')'                     |
-                             not_token BooleanExpression                   |
-                             BooleanExpression and_token BooleanExpression |
-                             BooleanExpression or_token BooleanExpression  |
-                             Column magnitude_comp_token number            |
-                             number magnitude_comp_token Column            |
-                             EqualityComp
+
+<BooleanExpression> = <lpar> BooleanExpression <rpar> |
+                      NotExpr                         |
+                      AndExpr                         |
+                      OrExpr                          |
+                      EqualsExpr                      |
+                      NotEqualsExpr                   |
+                      GreaterExpr                     |
+                      GreaterEqualExpr                |
+                      LessExpr                        |
+                      LessEqualExpr
+
+NotExpr = not_token <whitespace> BooleanExpression
 
 not_token                  = '¬' | 'not'
 
+AndExpr = BooleanExpression <whitespace> and_token <whitespace> BooleanExpression 
+
 and_token                  = '∧' | '&&' | 'and'       
+
+OrExpr = BooleanExpression <whitespace> or_token <whitespace> BooleanExpression 
+
 or_token                   = '∨' | '||' | 'or'       
 
+EqualsExpr = ColNumOrString <whitespace> <'='> <whitespace> ColNumOrString
 
-magnitude_comp_token       = '>' | '>=' | '≥' | '<' | '<=' | '≤'
+NotEqualsExpr = ColNumOrString <whitespace> ne_token <whitespace> ColNumOrString
 
-EqualityComp               = Column equality_token Column |
-                             Column equality_token number |
-                             number equality_token Column |
-                             number equality_token number
+ne_token = '!=' | '≠'
 
-equality_token             = '=' | '!=' | '≠'
+<ColNumOrString> = Column | number | string
+
+GreaterExpr = ColNumOrString <whitespace> <'>'> <whitespace> ColNumOrString
+
+GreaterEqualExpr = ColNumOrString <whitespace> <ge_token> <whitespace> ColNumOrString
+
+ge_token = '>=' | '≥'
+
+LessExpr = ColNumOrString <whitespace> <'<'> <whitespace> ColNumOrString
+
+LessEqualExpr = ColNumOrString <whitespace> <le_token> <whitespace> ColNumOrString
+
+le_token = '<=' | '≤' 
+
+string                     = #"'[\w\s]*'"
 
 
 
@@ -84,10 +114,10 @@ RenameRelation             = rename_token relation_name
 RenameColumn               = rename_token ColToColOrCTCComma
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
-ColToColOrCTCComma         = Column left_arrow column_token                        |
-                             Column right_arrow column_token                       |
-                             Column left_arrow column_token ',' ColToColOrCTCComma |
-                             Column right_arrow column_token ',' ColToColOrCTCComma 
+ColToColOrCTCComma         = Column left_arrow #"\w+"                        |
+                             Column right_arrow #"\w+"                       |
+                             Column left_arrow #"\w+" <comma> ColToColOrCTCComma |
+                             Column right_arrow #"\w+" <comma> ColToColOrCTCComma 
 
 left_arrow                 = '<-' | '←'
 right_arrow                = '->' | '→'
@@ -102,7 +132,7 @@ order_by_token             = 'τ' | 'tau' | 'order by'
 
 (* a column that is 'directional' is one that is followed by asc[ending] or desc[ending] *)
 DirectionalColumnOrDCComma = Column asc_or_desc |
-                             Column asc_or_desc ',' DirectionalColumnOrDCComma 
+                             Column asc_or_desc <comma> DirectionalColumnOrDCComma 
 
 asc_or_desc                = 'asc' | 'ASC' | 'desc' | 'DESC'
 
@@ -114,10 +144,10 @@ GroupBy                    = group_by_token ';'AggregateOrAggComma |
 
 group_by_token             = 'γ' | 'gamma' | 'group by'
 
-AggregateOrAggComma        = 'COUNT' '(' '*' ')' right_arrow column_token                         |
-                             'COUNT' '(' '*' ')' right_arrow column_token ',' AggregateOrAggComma |
-                             aggregate_token '(' column_token ')' right_arrow column_token        |
-                             aggregate_token '(' column_token ')' right_arrow column_token ',' AggregateOrAggComma 
+AggregateOrAggComma        = 'COUNT' lpar '*' rpar right_arrow #"\w+"                         |
+                             'COUNT' lpar '*' rpar right_arrow #"\w+" <comma> AggregateOrAggComma |
+                             aggregate_token lpar #"\w+" rpar right_arrow #"\w+"
+                             aggregate_token lpar #"\w+" rpar right_arrow #"\w+" <comma> AggregateOrAggComma 
 
 aggregate_token            = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' | 'min' | 'max' | 'sum' | 'avg' 
 
@@ -130,11 +160,11 @@ aggregate_token            = 'COUNT' | 'MIN' | 'MAX' | 'SUM' | 'AVG' | 'count' |
 (*                              NaturalJoin  *)
 
 
-ColumnOrColumnComma        = Column | Column ',' ColumnOrColumnComma
+<ColumnOrColumnComma>       = Column | Column <whitespace> <comma> <whitespace> ColumnOrColumnComma
 
-Column                     = column_token |
-                             column_token '.' relation_name
-
-column_token               = #'\w'
+Column                     = #"\w+" |
+                             #"\w+" <'.'> relation_name
 
 number                     = #"\d+"
+
+<comma> = ','
