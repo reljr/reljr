@@ -122,16 +122,19 @@ RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RA
 
 
 
-OrderBy                      = <order_by_token> ColumnOrColumnComma RAExpression |
-                               <order_by_token> DirectionalColumnOrDCComma RAExpression
+OrderBy                      = <order_by_token> DirectionalColumn RAExpression
 
 order_by_token               = "τ" | "tau" | "order by" | <whitespace> <order_by_token> <whitespace>
 
-(* a column that is "directional" is one that is followed by asc[ending] or desc[ending] *)
-<DirectionalColumnOrDCComma> = Column <asc_or_desc> |
-                               Column <asc_or_desc> <comma> DirectionalColumnOrDCComma
+<DirectionalColumn>          = AscendingColumn | DescendingColumn | DirectionalColumn <comma> DirectionalColumn
 
-asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <asc_or_desc> <whitespace>
+AscendingColumn              = Column <asc> 
+
+asc                          = "asc" | "ASC" | <whitespace> <asc> <whitespace>
+
+DescendingColumn             = Column <desc>
+
+desc                         = "desc" | "DESC" | <whitespace> <desc> <whitespace>
 
 
 
