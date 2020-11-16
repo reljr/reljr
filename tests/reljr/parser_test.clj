@@ -89,6 +89,14 @@
                                       [:Column "a"]
                                       [:CrossProduct "B" [:Projection [:Column "c"] "D"]]]))))
 
+(t/deftest RAInnerJoin (t/is (= (p/relational-algebra-parser "ρ a ( Customer )⋈ a.name < b.name ( ρ b ( Customer ) )")
+                                '([:RenameRelation
+                                   "a"
+                                   [:InnerJoin
+                                    "Customer"
+                                    [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
+                                    [:RenameRelation "b" "Customer"]]]))))
+
 (t/deftest RANaturalJoin (t/is (= (p/relational-algebra-parser "ρ a ( Customer )⋈ sigma a.name < b.name ( ρ b ( Customer ) )")
                                   '([:RenameRelation
                                      "a"
