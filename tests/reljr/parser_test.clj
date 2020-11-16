@@ -47,13 +47,16 @@
               [:Projection [:Column "id"] [:Column "firstname"] "Customer"]]))))
 
 (t/deftest RAOrderBy
-  (t/is (= (p/relational-algebra-parser "tau a (R)")
-           '([:OrderBy [:Column "a"] "R"])))
+  (t/is (= (p/relational-algebra-parser "tau a asc (R)")
+           '([:OrderBy [:AscendingColumn [:Column "a"]] "R"])))
   (t/is (= (p/relational-algebra-parser "tau a asc, b desc (R)")
-           '([:OrderBy [:Column "a"] [:Column "b"] "R"])))
+           '([:OrderBy
+              [:AscendingColumn [:Column "a"]]
+              [:DescendingColumn [:Column "b"]]
+              "R"])))
   (t/is (= (p/relational-algebra-parser "τ firstname desc (π id, firstname ( Customer ) )")
            '([:OrderBy
-              [:Column "firstname"]
+              [:DescendingColumn [:Column "firstname"]]
               [:Projection [:Column "id"] [:Column "firstname"] "Customer"]]))))
 
 (t/deftest RAGroupBy
