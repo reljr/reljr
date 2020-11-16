@@ -1,7 +1,7 @@
-(ns parser.core-test
-  (:require  [clojure.test :as t]
-             [parser.core :as p]
-             [instaparse.core :as insta]))
+(ns reljr.parser-test
+  (:require [clojure.test :as t]
+            [reljr.parser :as p]
+            [instaparse.core :as insta]))
 
 (t/deftest RAProjection
   (t/is (= (p/relational-algebra-parser "π surname ( Customer )")

@@ -1,4 +1,4 @@
-(ns parser.core
+(ns reljr.parser
   (:require [instaparse.core :as insta]))
 
 (def relational-algebra-parser
