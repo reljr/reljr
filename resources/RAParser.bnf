@@ -41,7 +41,7 @@ RAExpression precedence:
 
 <MidPrecedenceBinOp>         = Intersection | HighPrecedenceBinOp
 
-<HighPrecedenceBinOp>        = CrossProduct | NaturalJoin |Division | RAExpression
+<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin |Division | RAExpression
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
@@ -182,9 +182,16 @@ cross_product_token          = "*" | "cross join" | "×" | <whitespace> <cross_p
 
 
 
+InnerJoin                  = HighPrecedenceBinOp <inner_join_token> BooleanExpression RAExpression
+
+inner_join_token           = "⋈" | "⨝" | "join" | "inner join" | <whitespace> <inner_join_token> <whitespace>
+
+
+
+
 NaturalJoin                  = HighPrecedenceBinOp <natural_join_token> RAExpression
 
-natural_join_token           = "⋈" | "natural join" | <whitespace> <natural_join_token> <whitespace>
+natural_join_token           = "⋈" | "⨝" | "natural join" | <whitespace> <natural_join_token> <whitespace>
 
 
 
