@@ -1,4 +1,4 @@
-(ns reljr.interpreter
+(ns reljr.table
   (:require [clojure.set :as set]))
 
 (def some-table
