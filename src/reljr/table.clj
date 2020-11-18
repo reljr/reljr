@@ -6,6 +6,10 @@
     {:R/a 1 :R/b 7 :R/c 2}
     {:R/a 2 :R/b 5 :R/c 1}})
 
+(defn columns-of [table]
+  (when-let [[r] (seq table)]
+    (into #{} (keys r))))
+
 (defn project [table keys]
   (let [projection (apply juxt keys)]
     (into #{}
