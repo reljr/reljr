@@ -1,6 +1,7 @@
 (ns reljr.interpreter
   (:require [reljr.table :as table]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [reljr.aggregates :as agg]))
 
 (defn resolve-column [col known-cols]
   (if (= (count col) 3)
@@ -12,7 +13,21 @@
              (resolve-column col known-cols))))
 
 (defn aggregation-for [agg cols]
-  (fn [_] {}))
+  (fn [t]
+    (into {}
+          (for [[label column new-name] agg]
+            (let [column (resolve-column column cols)
+                  new-column (keyword (namespace column) new-name)]
+              [new-column (case label
+                            :AggregateCountStar (agg/count-star t column)
+                            :AggregateCount (agg/count t column)
+                            :AggregateMin (agg/min t column)
+                            :AggregateMax (agg/max t column)
+                            :AggregateSum (agg/sum t column)
+                            :AggregateAvg (agg/avg t column))])))))
+
+[[:AggregateMin [:Column "x"] "y"]
+ [:AggregateMax [:Column "z"] "foo"]]
 
 (defn predicate-for [boolexpr known-cols]
   (case (first boolexpr)
