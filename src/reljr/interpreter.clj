@@ -12,6 +12,12 @@
   (into [] (for [col raw-cols]
              (resolve-column col known-cols))))
 
+;; FIXME: breaks for :AggregateCountStar because `agg` only has two elements in
+;; it. e.g. `gamma a; count(*) -> doot R`, agg will have the value
+;;
+;; [:AggregateCountStar "doot"]
+;;
+;; which leaves new-name as nil, which fails
 (defn aggregation-for [agg cols]
   (fn [t]
     (into {}
@@ -19,15 +25,12 @@
             (let [column (resolve-column column cols)
                   new-column (keyword (namespace column) new-name)]
               [new-column (case label
-                            :AggregateCountStar (agg/count-star t column)
-                            :AggregateCount (agg/count t column)
-                            :AggregateMin (agg/min t column)
-                            :AggregateMax (agg/max t column)
+                            :AggregateCountStar (count t)
+                            :AggregateCount (count t)
+                            :AggregateMin (agg/mincol t column)
+                            :AggregateMax (agg/maxcol t column)
                             :AggregateSum (agg/sum t column)
                             :AggregateAvg (agg/avg t column))])))))
-
-[[:AggregateMin [:Column "x"] "y"]
- [:AggregateMax [:Column "z"] "foo"]]
 
 (defn predicate-for [boolexpr known-cols]
   (case (first boolexpr)
@@ -136,8 +139,9 @@
                      known-cols (table/columns-of subeval)
                      cols (for [[o c] cols]
                             [(resolve-column c known-cols)
-                             ({:AscendingColumn <
-                               :DescendingColumn >} o)])]
+                             ({:AscendingColumn #(< (compare %1 %2) 0)
+                               :DescendingColumn #(> (compare %1 %2) 0)}
+                              o)])]
                  (table/order-records-by subeval (into [] cols)))
       :GroupBy (let [cols (butlast (rest expression))
                      [group-cols agg-cols] (split-with #(= :Column (first %)) cols)
