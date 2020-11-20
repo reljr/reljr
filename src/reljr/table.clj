@@ -58,13 +58,15 @@
       #{})))
 
 (defn group-records-by [table group-cols aggregation]
-  (let [record-groups (group-by (apply juxt group-cols) table)
-        grouped-records
-        (map (fn [[group records]]
-               (into (aggregation records)
-                     (map vector group-cols group)))
-             record-groups)]
-    (into #{} grouped-records)))
+  (if (seq group-cols)
+    (let [record-groups (group-by (apply juxt group-cols) table)
+          grouped-records
+          (map (fn [[group records]]
+                 (into (aggregation records)
+                       (map vector group-cols group)))
+               record-groups)]
+      (into #{} grouped-records))
+    (aggregation table)))
 
 (defn cross-product [table1 table2]
   (into #{} (for [r1 table1
