@@ -102,6 +102,14 @@
          #{#:R{:count 1, :b "a"}
            #:R{:count 1, :b "e"}
            #:R{:count 1, :b "c"}
+           #:R{:count 2, :b "d"}}))
+    (t/testing "count star"
+      (= (i/evaluate (parse "gamma count (*) -> count bar") table-bar)
+         #:R{:count 5})
+      (= (i/evaluate (parse "gamma b; count (*) -> count bar") table-bar)
+         #{#:R{:count 1, :b "a"}
+           #:R{:count 1, :b "e"}
+           #:R{:count 1, :b "c"}
            #:R{:count 2, :b "d"}})))
 
   (t/testing "union"
