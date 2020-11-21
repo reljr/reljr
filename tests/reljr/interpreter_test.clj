@@ -62,7 +62,48 @@
               #:R{:a 3, :b "c", :c "c"}
               #:R{:a 5, :b "d", :c "b"}])))
 
-  (t/testing "group by")
+  (t/testing "group by"
+    (t/testing "sum"
+      (t/is (= (i/evaluate (parse "gamma sum (y) -> a Foo") table-foo)
+               #:R{:a 8}))
+      (t/is (= (i/evaluate (parse "gamma b; sum (a) -> sum bar") table-bar)
+               #{#:R{:sum 1, :b "a"}
+                 #:R{:sum 3, :b "c"}
+                 #:R{:sum 6, :b "e"}
+                 #:R{:sum 9, :b "d"}})))
+    (t/testing "min"
+      (= (i/evaluate (parse "gamma min (a) -> min bar") table-bar)
+         #:R{:min 1})
+      (= (i/evaluate (parse "gamma b; min (a) -> min bar") table-bar)
+         #{#:R{:min 4, :b "d"}
+           #:R{:min 6, :b "e"}
+           #:R{:min 3, :b "c"}
+           #:R{:min 1, :b "a"}}))
+    (t/testing "max"
+      (= (i/evaluate (parse "gamma max (a) -> max bar") table-bar)
+         #:R{:max 6})
+      (= (i/evaluate (parse "gamma b; max (a) -> max bar") table-bar)
+         #{#:R{:max 5, :b "d"}
+           #:R{:max 6, :b "e"}
+           #:R{:max 3, :b "c"}
+           #:R{:max 1, :b "a"}}))
+    (t/testing "avg"
+      (= (i/evaluate (parse "gamma avg (a) -> avg bar") table-bar)
+         #:R{:avg 19/5})
+      (= (i/evaluate (parse "gamma b; avg (a) -> avg bar") table-bar)
+         #{#:R{:avg 6, :b "e"}
+           #:R{:avg 9/2, :b "d"}
+           #:R{:avg 3, :b "c"}
+           #:R{:avg 1, :b "a"}}))
+    (t/testing "count"
+      (= (i/evaluate (parse "gamma count (a) -> count bar") table-bar)
+         #:R{:count 5})
+      (= (i/evaluate (parse "gamma b; count (a) -> count bar") table-bar)
+         #{#:R{:count 1, :b "a"}
+           #:R{:count 1, :b "e"}
+           #:R{:count 1, :b "c"}
+           #:R{:count 2, :b "d"}})))
+
   (t/testing "union"
     (t/is (= (i/evaluate (parse "baz union bar") (merge table-bar table-baz))
              #{#:R{:a 1, :b "a", :c "d"} {:R/x 99, :S/x 12, :R/y 84}
