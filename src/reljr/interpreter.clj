@@ -12,25 +12,20 @@
   (into [] (for [col raw-cols]
              (resolve-column col known-cols))))
 
-;; FIXME: breaks for :AggregateCountStar because `agg` only has two elements in
-;; it. e.g. `gamma a; count(*) -> doot R`, agg will have the value
-;;
-;; [:AggregateCountStar "doot"]
-;;
-;; which leaves new-name as nil, which fails
 (defn aggregation-for [agg cols]
   (fn [t]
     (into {}
           (for [[label column new-name] agg]
-            (let [column (resolve-column column cols)
-                  new-column (keyword (namespace column) new-name)]
-              [new-column (case label
-                            :AggregateCountStar (count t)
-                            :AggregateCount (count t)
-                            :AggregateMin (agg/mincol t column)
-                            :AggregateMax (agg/maxcol t column)
-                            :AggregateSum (agg/sum t column)
-                            :AggregateAvg (agg/avg t column))])))))
+            (if (nil? new-name)
+              [(keyword (namespace (first cols)) column) (count t)]
+              (let [column (resolve-column column cols)
+                    new-column (keyword (namespace column) new-name)]
+                [new-column (case label
+                              :AggregateCount (count t)
+                              :AggregateMin (agg/mincol t column)
+                              :AggregateMax (agg/maxcol t column)
+                              :AggregateSum (agg/sum t column)
+                              :AggregateAvg (agg/avg t column))]))))))
 
 (defn predicate-for [boolexpr known-cols]
   (case (first boolexpr)
