@@ -1,3 +1,4 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.0"}
+        org.clojure/data.csv {:mvn/version "1.0.0"}
         instaparse/instaparse {:mvn/version "1.4.10"}}
  :paths ["src" "resources" "tests"]}
