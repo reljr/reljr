@@ -7,16 +7,17 @@
   [filename]
   (first (str/split filename #"\.")))
 
-(defn csv-data->maps [csv-data]
+(defn csv-data->maps [csv-data the-name]
   ;;boilerplate from https://github.com/clojure/data.csv
   (map zipmap
-       (->> (first csv-data) ;; First row is the header
-            (map keyword) ;; Drop if you want string keys instead
+       (->> (map #(keyword the-name %) (first csv-data))
+            (map keyword)
             repeat)
        (rest csv-data)))
 
 (defn get-table-data
   [filename]
-  {(get-table-name filename)
-   (csv-data->maps (with-open [reader (io/reader (io/resource filename))]
-                     (doall (csv/read-csv reader))))})
+  (let [table-name (get-table-name filename)]
+    {table-name
+     (set (csv-data->maps (with-open [reader (io/reader (io/resource filename))]
+                            (doall (csv/read-csv reader))) table-name))}))
