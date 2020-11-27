@@ -17,7 +17,9 @@
 
 (defn get-table-data
   [filename]
-  (let [table-name (get-table-name filename)]
-    {table-name
-     (set (csv-data->maps (with-open [reader (io/reader (io/resource filename))]
-                            (doall (csv/read-csv reader))) table-name))}))
+  (if (.exists (io/file filename))
+    (let [table-name (get-table-name filename)]
+      {table-name
+       (set (csv-data->maps (with-open [reader (io/reader filename)]
+                              (doall (csv/read-csv reader))) table-name))})
+    (println (str "Couldn't find file " filename "."))))
