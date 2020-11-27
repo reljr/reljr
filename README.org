@@ -8,10 +8,10 @@
 #+OPTIONS: date:nil toc:nil
 
 * Introduction
-This document presents details regarding the implementation of =reljr=, a
-relational algebra evaluator written in the [[https://clojure.org/][Clojure]] programming language to
-satisfy the requirements for Project Four in the Fall 2020 session of the
-Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
+=reljr= is a relational algebra evaluator written in the [[https://clojure.org/][Clojure]] programming
+language to satisfy the requirements for Project Four in the Fall 2020 session
+of the Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr.
+Tu]].
 * Using =reljr=
 ** Command line arguments
 ** Loading tables
@@ -32,6 +32,8 @@ Advanced Databases course offered at USF, under the instruction of [[https://www
 - You can unload an in-memory table with =unload <tablename>=.
 - If you make changes to a table and want to update it within =reljr=, use
   =read= again.
+- The =list= command will output the names of all currently loaded tables, along
+  with each tables' column names.
 ** Performing queries
 A query can be run on its own after a table load or as part of e.g. the =store=
 command above.
@@ -72,7 +74,9 @@ tokens =reljr= recognizes for the operation listed after each:
 ** Writing tables
 - To write a table out to a file, use =write <tablename>=. This will create a
   file =<tablename>.csv= in the same directory as =reljr=.
-- =write <tablename> as <name>= will write out a file to =<name>.csv=.
+- =write <tablename> as <name>= will write out a file to =<name>=, where name
+  can be a csv file or an extensionless file. =reljr= doesn't support any other
+  file extensions.
 - =write= will overwrite any files with the same name.
 - If a table has two columns with the same name but which are qualified by different tables (e.g. =R.n= and =S.n=) the =write= command will write a csv with duplicate column headers. 
 ** Quitting =reljr=
