@@ -16,7 +16,7 @@ Advanced Databases course offered at USF, under the instruction of [[https://www
 ** Command line arguments
 ** Loading tables
 - Use =read <filename>= to read a file in the directory from which you launched
-  =reljr=. If a table with that name is already in memory, the read will fail.
+  =reljr=. This will overwrite any in-memory table with the same name.
 - Use =read <filename> as <tablename>= to load a table with a specific name.
 - Table names are /case-sensitive/, so reading =bar.csv= and =Bar.csv= will
   result in two separate tables.
@@ -32,8 +32,10 @@ Advanced Databases course offered at USF, under the instruction of [[https://www
 - You can unload an in-memory table with =unload <tablename>=.
 - If you make changes to a table and want to update it within =reljr=, use
   =refresh <tablename>=.
-- Typing in a =<tablename>= at the =reljr= console will pretty-print the table.
 ** Performing queries
+A query can be run on its own after a table load or as part of e.g. the =store=
+command above.
+
 =reljr= supports the following types of relational algebra queries, with the
 tokens =reljr= recognizes for the operation listed after each:
 - Projection (π, =pi=, =project=)
@@ -70,8 +72,8 @@ tokens =reljr= recognizes for the operation listed after each:
 ** Writing tables
 - To write a table out to a file, use =write <tablename>=. This will create a
   file =<tablename>.csv= in the same directory as =reljr=.
-- Using the =write= command on a table that was =read= in will overwrite that
-  file.
+- =write <tablename> as <name>= will write out a file to =<name>.csv=.
+- =write= will overwrite any files with the same name.
 * Implementation Details
 ** Parser
 ** Evaluator
