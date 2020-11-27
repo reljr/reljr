@@ -2,6 +2,9 @@
 #+AUTHOR: Elijah Malaby
 #+AUTHOR: Luciano Laratelli
 #+LATEX_HEADER: \usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+#+LATEX_HEADER: \usepackage[utf8]{inputenc}
+#+LATEX_HEADER: \usepackage{unicode-math}
+#+LATEX_HEADER: \setmainfont{FreeSerif}
 #+OPTIONS: date:nil toc:nil
 
 * Introduction
@@ -9,6 +12,60 @@ This document presents details regarding the implementation of =reljr=, a
 relational algebra evaluator written in the [[https://clojure.org/][Clojure]] programming language to
 satisfy the requirements for Project Four in the Fall 2020 session of the
 Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
+* Using =reljr=
+** Command line arguments
+** Loading tables
+- Use =read <filename>= to read a file in the directory from which you launched
+  =reljr=. If a table with that name is already in memory, the read will fail.
+- Use =read <filename> as <tablename>= to load a table with a specific name.
+- Table names are /case-sensitive/, so reading =bar.csv= and =Bar.csv= will
+  result in two separate tables.
+- Using =store <query> as <name>= will store the table that results from a query
+  (see [[Performing queries][below]]) with the given name. If the given name conflicts with that of an
+  existing table, the query will not run.
+** Managing in-memory tables
+- You can perform a persistent rename of a table (as opposed to the temporary
+  renaming that occurs during the relational algebra "rename relation"
+  operation) with =rename <tablename>=.
+- You can unload an in-memory table with =unload <tablename>=.
+- If you make changes to a table and want to update it within =reljr=, use
+  =refresh <tablename>=.
+- Typing in a =<tablename>= at the =reljr= console will pretty-print the table.
+** Performing queries
+=reljr= supports the following types of relational algebra queries, with the
+tokens =reljr= recognizes for the operation listed after each:
+- Projection (π, =pi=, =project=)
+- Selection (σ, =sigma=, =select=), with the following boolean operations:
+  + Not (¬, =not=)
+  + And (∧, =&&=, =and=)
+  + Or (∨, =||=, =or=)
+  + Equality (=)
+  + Inequality (≠, =!==)
+  + Greater than (>)
+  + Greater than or equal to (≥, =>==)
+  + Less than (<)
+  + Less than or equal to (≤, =<==)
+- Renaming of a column or relation (ρ, =rho=, =rename=)
+- Order by (τ, =tau=, =order by=), followed by a token to indicate the order of the column:
+  + =ASC=, =asc=, =DESC=, =desc=
+- Group by (γ, =gamma=, =group by=), with support for these aggregates:
+  + =count(*)=
+  + =count(<colname>)=
+  + =min(<colname>)=
+  + =max(<colname>)=
+  + =sum(<colname>)=
+  + =avg(<colname>)=
+- Cross product (×, =*=, =cross join=)
+- Inner Join(⋈, ⨝, =join=, =inner join=), with support for the same boolean
+  operations as Selection
+- Natural Join(⋈, ⨝, =natural join=)
+- The set operations:
+  + Division (÷, =/=)
+  + Intersection (∩, =intersect=)
+  + Union (∪, =union=)
+  + Subtraction (=-=, =\\=, =except=)
+  
+** Writing tables
 * Implementation Details
 ** Parser
 ** Evaluator
