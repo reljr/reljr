@@ -23,6 +23,8 @@ Advanced Databases course offered at USF, under the instruction of [[https://www
 - Using =store <query> as <name>= will store the table that results from a query
   (see [[Performing queries][below]]) with the given name. If the given name conflicts with that of an
   existing table, the query will not run.
+- =reljr= assumes that every column in the table shares the same qualifier
+  (i.e., columns =S.n= and =R.n= can't be read in from the same file.)
 ** Managing in-memory tables
 - You can perform a persistent rename of a table (as opposed to the temporary
   renaming that occurs during the relational algebra "rename relation"
@@ -66,6 +68,10 @@ tokens =reljr= recognizes for the operation listed after each:
   + Subtraction (=-=, =\\=, =except=)
   
 ** Writing tables
+- To write a table out to a file, use =write <tablename>=. This will create a
+  file =<tablename>.csv= in the same directory as =reljr=.
+- Using the =write= command on a table that was =read= in will overwrite that
+  file.
 * Implementation Details
 ** Parser
 ** Evaluator
