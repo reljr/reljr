@@ -8,11 +8,11 @@
 This document presents details regarding the implementation of =reljr=, a
 relational algebra evaluator written in the [[https://clojure.org/][Clojure]] programming language to
 satisfy the requirements for Project Four in the Fall 2020 session of the
-Advanced Databases course offerred at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
+Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr. Tu]].
 * Implementation Details
 ** Parser
 ** Evaluator
-** REPL
+** CLI
 ** Input Format
 ** Output
 *** Console
