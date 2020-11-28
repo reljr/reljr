@@ -27,9 +27,7 @@ RAExpression precedence:
 -   Union, Subtraction
 *)
 
-<RAExpression>               = <lpar> RAExpression <rpar>              |
-                               relation_name                           |
-                               Projection                              |
+<RAExpression>               = Projection                              |
                                Selection                               |
                                RenameRelation                          |
                                RenameColumn                            |
@@ -41,7 +39,7 @@ RAExpression precedence:
 
 <MidPrecedenceBinOp>         = Intersection | HighPrecedenceBinOp
 
-<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin |Division | RAExpression
+<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin | Division | relation_name | <lpar> RAExpression <rpar>
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
