@@ -108,7 +108,12 @@
       :Projection (let [cols (butlast (rest expression))
                         subexpr (last expression)
                         subeval (evaluate subexpr relations)
-                        resolved-cols (resolve-columns cols (table/columns-of subeval))]
+                        known-cols (table/columns-of subeval)
+                        resolved-cols (for [col cols]
+                                        (case (first col)
+                                          :ExprColumn [(predicate-for (nth col 1) known-cols)
+                                                       (keyword (nth col 2))]
+                                          (resolve-column col known-cols)))]
                     (table/project subeval resolved-cols))
       :Selection (let [[_ test subexpr] expression
                        subeval (evaluate subexpr relations)
