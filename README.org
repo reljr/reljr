@@ -1,4 +1,4 @@
-#+TITLE: CIS6930 -- Project Four
+#+TITLE: reljr
 #+AUTHOR: Elijah Malaby
 #+AUTHOR: Luciano Laratelli
 #+LATEX_HEADER: \usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
@@ -15,14 +15,20 @@ Tu]].
 * Using =reljr=
 ** Command line arguments
 ** Loading tables
-- Use =read <filename>= to read a file in the directory from which you launched
-  =reljr=. This will overwrite any in-memory table with the same name.
-- Use =read <filename> as <tablename>= to load a table with a specific name.
+- =reljr= expects input tables stored as csv files, with a header row.
+- Use =read <filename>= to read a table in the directory from which you launched
+  =reljr=. 
+  + If the filename is =bar.csv=, reljr will store the table in memory as
+  =bar=.
+  + If reljr already knows about a table with this name, it will be overwritten.
+- Use =read <filename> as <tablename>= to specify the name =reljr= associates
+  with a table. If the specified name already exists in memory, the table will
+  be overwritten.
 - Table names are /case-sensitive/, so reading =bar.csv= and =Bar.csv= will
   result in two separate tables.
 - Using =store <query> as <name>= will store the table that results from a query
-  (see [[Performing queries][below]]) with the given name. If the given name conflicts with that of an
-  existing table, the query will not run.
+  (see [[Performing queries][below]]) with the given name. As always, if the name exists, the table will
+  be overwritten
 - =reljr= assumes that every column in the table shares the same qualifier
   (i.e., columns =S.n= and =R.n= can't be read in from the same file.)
 ** Managing in-memory tables
