@@ -67,60 +67,20 @@ QueryCommand                 = RAExpression
   ; unary operations ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
-Projection                   = <projection_token> ColumnOrColumnComma RAExpression
+Projection                   = <projection_token> ProjectionBody RAExpression
+
+<ProjectionColumn>           = Column / ExprColumn
+<ProjectionBody>             = ProjectionColumn                                     |
+                               ProjectionColumn <whitespace> <comma> ProjectionBody
 
 projection_token             = "π" | "pi" | "project" | <whitespace> <projection_token> <whitespace>
 
 
 
 
-Selection                    = <selection_token> BooleanExpression RAExpression
+Selection                    = <selection_token> ValueExpression RAExpression
 
 selection_token              = "σ" | "sigma" | "select" | <whitespace> <selection_token> <whitespace>
-
-<BooleanExpression>          = <lpar> BooleanExpression <rpar>             |
-                               <whitespace> BooleanExpression <whitespace> |
-                               NotExpr                                     |
-                               AndExpr                                     |
-                               OrExpr                                      |
-                               EqualsExpr                                  |
-                               NotEqualsExpr                               |
-                               GreaterExpr                                 |
-                               GreaterEqualExpr                            |
-                               LessExpr                                    |
-                               LessEqualExpr
-
-NotExpr                      = not_token BooleanExpression
-
-not_token                    = "¬" | "not" | <whitespace> <not_token> <whitespace>
-
-AndExpr                      = BooleanExpression <and_token> BooleanExpression 
-
-and_token                    = "∧" | "&&" | "and" | <whitespace> <and_token> <whitespace> 
-
-OrExpr                       = BooleanExpression <or_token> BooleanExpression 
-
-or_token                     = "∨" | "||" | "or" | <whitespace> <or_token> <whitespace> 
-
-EqualsExpr                   = ColNumOrString <whitespace> <"="> <whitespace> ColNumOrString
-
-NotEqualsExpr                = ColNumOrString <ne_token> ColNumOrString
-
-ne_token                     = "!=" | "≠" | <whitespace> <ne_token> <whitespace> 
-
-<ColNumOrString>             = Column | number | string
-
-GreaterExpr                  = ColNumOrString <whitespace> <">"> <whitespace> ColNumOrString
-
-GreaterEqualExpr             = ColNumOrString <ge_token> ColNumOrString
-
-ge_token                     = ">=" | "≥" | <whitespace> <ge_token> <whitespace>
-
-LessExpr                     = ColNumOrString <whitespace> <"<"> <whitespace> ColNumOrString
-
-LessEqualExpr                = ColNumOrString <le_token> ColNumOrString
-
-le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace> 
 
 
 
@@ -205,7 +165,7 @@ cross_product_token          = "*" | "cross join" | "×" | <whitespace> <cross_p
 
 
 
-InnerJoin                  = HighPrecedenceBinOp <inner_join_token> BooleanExpression RAExpression
+InnerJoin                  = HighPrecedenceBinOp <inner_join_token> ValueExpression RAExpression
 
 inner_join_token           = "⋈" | "⨝" | "join" | "inner join" | <whitespace> <inner_join_token> <whitespace>
 
@@ -244,11 +204,62 @@ Subtraction                  = LowPrecedenceBinOp <subtraction_token> MidPrecede
 
 subtraction_token            = "except" | "-" | "\\" | <whitespace> <subtraction_token> <whitespace>
 
+(*;;;;;;;;;;;;;;;;;;;;;
+  ; Value Expressions ;
+  ;;;;;;;;;;;;;;;;;;;;;*)
+
+<ValueExpression>            = <lpar> ValueExpression <rpar>             |
+                               <whitespace> ValueExpression <whitespace> |
+                               NotExpr                                   |
+                               AndExpr                                   |
+                               OrExpr                                    |
+                               EqualsExpr                                |
+                               NotEqualsExpr                             |
+                               GreaterExpr                               |
+                               GreaterEqualExpr                          |
+                               LessExpr                                  |
+                               LessEqualExpr
+
+NotExpr                      = not_token ValueExpression
+
+not_token                    = "¬" | "not" | <whitespace> <not_token> <whitespace>
+
+AndExpr                      = ValueExpression <and_token> ValueExpression
+
+and_token                    = "∧" | "&&" | "and" | <whitespace> <and_token> <whitespace>
+
+OrExpr                       = ValueExpression <or_token> ValueExpression
+
+or_token                     = "∨" | "||" | "or" | <whitespace> <or_token> <whitespace>
+
+EqualsExpr                   = ColNumOrString <whitespace> <"="> <whitespace> ColNumOrString
+
+NotEqualsExpr                = ColNumOrString <ne_token> ColNumOrString
+
+ne_token                     = "!=" | "≠" | <whitespace> <ne_token> <whitespace>
+
+<ColNumOrString>             = Column | number | string
+
+GreaterExpr                  = ColNumOrString <whitespace> <">"> <whitespace> ColNumOrString
+
+GreaterEqualExpr             = ColNumOrString <ge_token> ColNumOrString
+
+ge_token                     = ">=" | "≥" | <whitespace> <ge_token> <whitespace>
+
+LessExpr                     = ColNumOrString <whitespace> <"<"> <whitespace> ColNumOrString
+
+LessEqualExpr                = ColNumOrString <le_token> ColNumOrString
+
+le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace>
+
+
 (*;;;;;;;;;;;;;;;;;;;;
   ; common terminals ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
 <ColumnOrColumnComma>        = Column | Column <comma> ColumnOrColumnComma
+
+ExprColumn                   = ValueExpression <right_arrow> column_token
 
 Column                       = column_token | column_token <dot> relation_name
 
