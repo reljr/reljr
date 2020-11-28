@@ -181,4 +181,8 @@
                        known-cols (set/union (table/columns-of lval)
                                              (table/columns-of rval))
                        rel (relation-for boolexpr known-cols)]
-                   (table/inner-join lval rval rel)))))
+                   (table/inner-join lval rval rel))
+      :NaturalJoin (let [[_ lexp rexp] expression
+                         lval (evaluate lexp relations)
+                         rval (evaluate rexp relations)]
+                     (table/natural-join lval rval)))))

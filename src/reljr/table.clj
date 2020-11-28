@@ -78,3 +78,28 @@
                   r2 table2
                   :when (test r1 r2)]
               (into r1 r2))))
+
+(defn make-natural-join-test [table1 table2]
+  (let [cols1 (keys (first table1))
+        cols2 (keys (first table2))
+        cols (into #{} (concat cols1 cols2))
+        grouped-cols1 (group-by name cols1)
+        grouped-cols2 (group-by name cols2)
+        test-groups (for [[g1 cs1] grouped-cols1
+                          [g2 cs2] grouped-cols2
+                          :when (= g1 g2)]
+                      [[(apply juxt cs1) (apply juxt cs2)]
+                       (set cs2)])
+        tests (map first test-groups)
+        dropped-cols (map second test-groups)
+        proj-cols (reduce set/difference cols dropped-cols)]
+    [(fn [l r]
+       (every? (fn [[lj rj]]
+                 (every? (set (rj r))
+                         (lj l)))
+               tests))
+     proj-cols]))
+
+(defn natural-join [table1 table2]
+  (let [[test cols] (make-natural-join-test table1 table2)]
+    (project (inner-join table1 table2 test) cols)))
