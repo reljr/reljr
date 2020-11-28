@@ -24,3 +24,10 @@
                              (doall (csv/read-csv reader)))
                            table-name))}
      (println (str "Couldn't find file " filename ".")))))
+
+(defn write-table-data [table filename]
+  (when-let [table (seq table)]
+    (when-let [cols (seq (keys (first table)))]
+      (let [proj (apply juxt cols)]
+        (with-open [writer (io/writer filename)]
+          (csv/write-csv writer (cons (map name cols) (map proj table))))))))
