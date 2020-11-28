@@ -12,14 +12,27 @@
 language to satisfy the requirements for Project Four in the Fall 2020 session
 of the Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr.
 Tu]].
+* Getting =reljr=
+After cloning the =reljr= repository, it can be started with =clojure -m
+reljr.repl= from the top-level =reljr= directory. Alternatively, a jar can be
+constructed:
+#+begin_src shell
+clj -Spom
+clj -Xuberjar
+#+end_src
+Afterwards, the jar can be run with =java -jar target/uberjar/reljr.jar=.
 * Using =reljr=
-** Command line arguments
-** Loading tables
-- =reljr= expects input tables stored as csv files, with a header row.
+** Reading tables
+- =reljr= expects input tables stored as csv files, with a header row. The headers can be written in one of two ways:
+  + =<header>=, i.e. just a string
+  + =<header>:<type>=, a string, then a colon, then (optionally) one of the
+    following data types. If a data type is not provided, =reljr= treats the
+    items in that column as strings.
+    - =number= (floats)
+    - =string=
 - Use =read <filename>= to read a table in the directory from which you launched
-  =reljr=. 
-  + If the filename is =bar.csv=, reljr will store the table in memory as
-  =bar=.
+  =reljr=.
+  + If the filename is =bar.csv=, reljr will store the table in memory as =bar=.
   + If reljr already knows about a table with this name, it will be overwritten.
 - Use =read <filename> as <tablename>= to specify the name =reljr= associates
   with a table. If the specified name already exists in memory, the table will
@@ -42,7 +55,8 @@ Tu]].
   with each tables' column names.
 ** Performing queries
 A query can be run on its own after a table load or as part of e.g. the =store=
-command above.
+command above. If a table does not exist, it is treated as if it were an empty
+table. The result of such a query is an empty table.
 
 =reljr= supports the following types of relational algebra queries, with the
 tokens =reljr= recognizes for the operation listed after each:
@@ -95,7 +109,4 @@ Use =quit=.
 ** Output
 *** Console
 *** File
-* Performance
-* Drawbacks
 * Future Work
-* Conclusion
