@@ -15,7 +15,7 @@ before the NonTerminals.
 grammar sourced from the railroad diagrams at
 https://dbis-uibk.github.io/relax/help#relalg-syntax *)
 
-<S>                          = <whitespace> RAExpression <whitespace>
+<S>                          = <whitespace> Command <whitespace>
 
 
 (*
@@ -26,6 +26,28 @@ RAExpression precedence:
 -   Intersection
 -   Union, Subtraction
 *)
+
+<Command>                    = ReadCommand    /
+                               ReadAsCommand  /
+                               StoreAsCommand /
+                               RenameCommand  /
+                               DeleteCommand  /
+                               WriteCommand   /
+                               WriteAsCommand /
+                               ListCommand    /
+                               QuitCommand    /
+                               QueryCommand
+
+ReadCommand                  = <"read"> <whitespace> filename
+ReadAsCommand                = <"read"> <whitespace> filename <whitespace> <"as"> relation_name
+StoreAsCommand               = <"store"> <whitespace> RAExpression <whitespace> <"as"> relation_name
+RenameCommand                = <"rename"> <whitespace> relation_name <whitespace> <"to"> <whitespace> relation_name
+DeleteCommand                = <"delete"> <whitespace> relation_name
+WriteCommand                 = <"write"> <whitespace> relation_name
+WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace> <"as"> <whitespace> filename
+ListCommand                  = <"list">
+QuitCommand                  = <"quit">
+QueryCommand                 = RAExpression
 
 <RAExpression>               = Projection                              |
                                Selection                               |
@@ -253,3 +275,5 @@ number                       = #"\d+"
 <star>                       = <whitespace> "*" <whitespace>
 
 right_arrow                  = <whitespace> "->" <whitespace> | <whitespace> "→" <whitespace>
+
+<filename>                   = #"[\w]+([.]csv)?"
