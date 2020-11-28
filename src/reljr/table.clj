@@ -11,10 +11,12 @@
     (into #{} (keys r))))
 
 (defn project [table keys]
-  (let [projection (apply juxt keys)]
+  (let [val-funcs (map #(if (vector? %) (first %) %) keys)
+        col-names (map #(if (vector? %) (second %) %) keys)
+        projection (apply juxt val-funcs)]
     (into #{}
           (map (fn [record]
-                 (into {} (map vector keys (projection record)))))
+                 (into {} (map vector col-names (projection record)))))
           table)))
 
 (defn select [table test]
