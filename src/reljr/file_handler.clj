@@ -16,10 +16,11 @@
        (rest csv-data)))
 
 (defn get-table-data
-  [filename]
-  (if (.exists (io/file filename))
-    (let [table-name (get-table-name filename)]
-      {table-name
-       (set (csv-data->maps (with-open [reader (io/reader filename)]
-                              (doall (csv/read-csv reader))) table-name))})
-    (println (str "Couldn't find file " filename "."))))
+  ([filename] (get-table-data filename (get-table-name filename)))
+  ([filename table-name]
+   (if (.exists (io/file filename))
+     {table-name
+      (set (csv-data->maps (with-open [reader (io/reader filename)]
+                             (doall (csv/read-csv reader)))
+                           table-name))}
+     (println (str "Couldn't find file " filename ".")))))
