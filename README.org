@@ -44,14 +44,12 @@ Afterwards, the jar can be run with =java -jar target/uberjar/reljr.jar=.
   result in two separate tables.
 - Using =store <query> as <name>= will store the table that results from a query
   (see [[Performing queries][below]]) with the given name. As always, if the name exists, the table will
-  be overwritten
+  be overwritten. =store= will rename all the columns to use the new relation
+  name as by the rename operator. 
 - =reljr= assumes that every column in the table shares the same qualifier
   (i.e., columns =S.n= and =R.n= can't be read in from the same file.)
 ** Managing in-memory tables
-- You can perform a persistent rename of a table (as opposed to the temporary
-  renaming that occurs during the relational algebra "rename relation"
-  operation) with =rename <tablename> to <name>=.
-- You can unload an in-memory table with =unload <tablename>=.
+- You can delete a table from memory with =delete <tablename>=.
 - If you make changes to a table and want to update it within =reljr=, use
   =read= again.
 - The =list= command will output the names of all currently loaded tables, along
@@ -133,7 +131,7 @@ precedence:
     RAExpression within parentheses
  3. Intersection
  4. Union, Subtraction
-** REPL
+** Preprocessor
 ** Interpreter
 The source file [[file:src/reljr/interpreter.clj][interpeter.clj]] deals with the evaluation of relational algebra
 expressions and related computations. However, the functions in this file
@@ -177,9 +175,53 @@ the same form as the input (a set of maps) but with only the requested columns:
 #{#:R{:x 3, :y 2} #:R{:x 5, :y 6}}
 #+end_src
 **** Select
+
+The =select= function expects to receive a table as we've seen before, as well
+as a =test=, which is a predicate function. The function
+[[file:src/reljr/interpreter.clj][=predicate-runner=]] handles the creation of
+these predicates. With the predicate in hand, =select= filters the tuples in
+=table= using the Clojure built-in =filter=, putting those tuples into a new
+set, and returns.
 **** Rename
+
+The =rename= function renames a relation. It iterates through every tuple in the
+table, creating a new tuple with the appropriate name. The iteration through
+tuples is necessary because column names are namespaced by the table name, and
+so every table member requires a rename.
 **** Rename-Column
+
+Rename column works by using the =assoc=/ =dissoc= pair of functions. =dissoc=
+removes a mapping with the given key from a map, while assoc adds one. The
+"thread-first", or "forward-threading", macro =->= in the call to map is
+equivalent to the following expression:
+
+#+begin_src clojure
+(dissoc (assoc r to (from r)) from)
+#+end_src
 **** Order-Records-By
+
+The =order-records-by= function orders the tuples in a =table= based on a set of
+=col-rules=, where each =col-rule= is a pair composed of a namespaced key (a
+column name, like =:R/a=) and a clojure function, which is one of the following
+comparators:
+#+begin_src clojure
+ #(< (compare %1 %2) 0)
+ #(> (compare %1 %2) 0)
+#+end_src
+Clojure's =compare= function performs the following (taken from [[https://clojuredocs.org/clojure.core/compare][ClojureDocs]]):
+#+begin_src text
+...Returns a negative number, zero, or a positive number when x is logically
+'less than', 'equal to', or 'greater than' y. Same as Java x.compareTo(y) except
+it also works for nil, and compares numbers and collections in a
+type-independent manner....
+#+end_src
+These comparators are used in the =ordering= function (contained within
+=order-records-by=) to determine row order. Once the =ordering= function has
+been built up, it is applied to the rows of the table by =into=. =into='s
+arguments are an empty =sorted-set=, whose comparator is now the entire
+=ordering= function. Into works by taking every member of =table= and adding it
+to the set. When each element gets added, it is placed according to the
+comparator.
 **** Group-Records-By
 **** Cross-Product
 **** Inner-Join
