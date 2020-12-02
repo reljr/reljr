@@ -3,10 +3,6 @@
             [clojure.set :as set]
             [reljr.aggregates :as agg]))
 
-(defn resolve-column [col known-cols]
-  (if (= (count col) 3)
-    (keyword (get col 1) (get col 2))
-    (first (filter #(= (get col 1) (name %)) known-cols))))
 (def predicate-fns
   {'not not
    'and #(and %1 %2)
@@ -23,24 +19,6 @@
    '% mod
    "length" count})
 
-(defn resolve-columns [raw-cols known-cols]
-  (into [] (for [col raw-cols]
-             (resolve-column col known-cols))))
-
-(defn aggregation-for [agg cols]
-  (fn [t]
-    (into {}
-          (for [[label column new-name] agg]
-            (if (nil? new-name)
-              [(keyword (namespace (first cols)) column) (count t)]
-              (let [column (resolve-column column cols)
-                    new-column (keyword (namespace column) new-name)]
-                [new-column (case label
-                              :AggregateCount (count t)
-                              :AggregateMin (agg/mincol t column)
-                              :AggregateMax (agg/maxcol t column)
-                              :AggregateSum (agg/sum t column)
-                              :AggregateAvg (agg/avg t column))]))))))
 (defn predicate-runner [predicate]
   (cond
     (keyword? predicate) (fn [& colls] (some predicate colls))
@@ -51,41 +29,6 @@
           args (apply juxt (map predicate-runner args))]
       (fn [& records] (apply func (apply args records))))))
 
-(defn predicate-for [boolexpr known-cols]
-  (case (first boolexpr)
-    :Column (resolve-column boolexpr known-cols)
-    :number (fn [_] (read-string (second boolexpr)))
-    :NotExpr (let [[_ exp] boolexpr
-                   pred (predicate-for exp known-cols)]
-               #(not (pred %)))
-    :AndExpr (let [[_ lexp rexp] boolexpr
-                   lpred (predicate-for lexp known-cols)
-                   rpred (predicate-for rexp known-cols)]
-               #(and (lpred %) (rpred %)))
-    :OrExpr (let [[_ lexp rexp] boolexpr
-                  lpred (predicate-for lexp known-cols)
-                  rpred (predicate-for rexp known-cols)]
-              #(or (lpred %) (rpred %)))
-    :EqualsExpr (let [[_ lexp rexp] boolexpr
-                      lpred (predicate-for lexp known-cols)
-                      rpred (predicate-for rexp known-cols)]
-                  #(= (lpred %) (rpred %)))
-    :GreaterExpr (let [[_ lexp rexp] boolexpr
-                       lpred (predicate-for lexp known-cols)
-                       rpred (predicate-for rexp known-cols)]
-                   #(> (lpred %) (rpred %)))
-    :GreaterEqualExpr (let [[_ lexp rexp] boolexpr
-                            lpred (predicate-for lexp known-cols)
-                            rpred (predicate-for rexp known-cols)]
-                        #(>= (lpred %) (rpred %)))
-    :LessExpr (let [[_ lexp rexp] boolexpr
-                    lpred (predicate-for lexp known-cols)
-                    rpred (predicate-for rexp known-cols)]
-                #(< (lpred %) (rpred %)))
-    :LessEqualExpr (let [[_ lexp rexp] boolexpr
-                         lpred (predicate-for lexp known-cols)
-                         rpred (predicate-for rexp known-cols)]
-                     #(<= (lpred %) (rpred %)))))
 (def aggregate-fns
   {'count agg/cntcol
    'min agg/mincol
@@ -93,42 +36,6 @@
    'sum agg/sum
    'avg agg/avg})
 
-(defn relation-for [boolexpr known-cols]
-  (case (first boolexpr)
-    :Column (let [c (resolve-column boolexpr known-cols)]
-              #(or (c %1) (c %2)))
-    :number (fn [_ _] (read-string (second boolexpr)))
-    :NotExpr (let [[_ exp] boolexpr
-                   pred (relation-for exp known-cols)]
-               #(not (pred %1 %2)))
-    :AndExpr (let [[_ lexp rexp] boolexpr
-                   lpred (relation-for lexp known-cols)
-                   rpred (relation-for rexp known-cols)]
-               #(and (lpred %1 %2) (rpred %1 %2)))
-    :OrExpr (let [[_ lexp rexp] boolexpr
-                  lpred (relation-for lexp known-cols)
-                  rpred (relation-for rexp known-cols)]
-              #(or (lpred %1 %2) (rpred %1 %2)))
-    :EqualsExpr (let [[_ lexp rexp] boolexpr
-                      lpred (relation-for lexp known-cols)
-                      rpred (relation-for rexp known-cols)]
-                  #(= (lpred %1 %2) (rpred %1 %2)))
-    :GreaterExpr (let [[_ lexp rexp] boolexpr
-                       lpred (relation-for lexp known-cols)
-                       rpred (relation-for rexp known-cols)]
-                   #(> (lpred %1 %2) (rpred %1 %2)))
-    :GreaterEqualExpr (let [[_ lexp rexp] boolexpr
-                            lpred (relation-for lexp known-cols)
-                            rpred (relation-for rexp known-cols)]
-                        #(>= (lpred %1 %2) (rpred %1 %2)))
-    :LessExpr (let [[_ lexp rexp] boolexpr
-                    lpred (relation-for lexp known-cols)
-                    rpred (relation-for rexp known-cols)]
-                #(< (lpred %1 %2) (rpred %1 %2)))
-    :LessEqualExpr (let [[_ lexp rexp] boolexpr
-                         lpred (relation-for lexp known-cols)
-                         rpred (relation-for rexp known-cols)]
-                     #(<= (lpred %1 %2) (rpred %1 %2)))))
 (defn aggregation-runner [aggregation]
   (let [aggregation
         (for [[col [op arg]] aggregation]
