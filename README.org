@@ -1,10 +1,11 @@
 #+TITLE: reljr
 #+AUTHOR: Elijah Malaby
 #+AUTHOR: Luciano Laratelli
-#+LATEX_HEADER: \usepackage[left=1in,right=1in,top=1in,bottom=1in]{geometry}
+#+LATEX_HEADER: \usepackage[margin=.75in]{geometry}
 #+LATEX_HEADER: \usepackage[utf8]{inputenc}
 #+LATEX_HEADER: \usepackage{unicode-math}
 #+LATEX_HEADER: \setmainfont{FreeSerif}
+#+LATEX_HEADER: \setlength\parindent{0pt}
 #+OPTIONS: date:nil toc:nil
 
 * Introduction
@@ -21,6 +22,8 @@ clj -Spom
 clj -Xuberjar
 #+end_src
 Afterwards, the jar can be run with =java -jar target/uberjar/reljr.jar=.
+=reljr= was developed and tested under Clojure version 1.10.0 and version
+1.8.0_ 265 of OpenJDK.
 * Using =reljr=
 ** Reading tables
 - =reljr= expects input tables stored as csv files, with a header row. The headers can be written in one of two ways:
@@ -70,7 +73,7 @@ tokens =reljr= recognizes for the operation listed after each:
   + Greater than (>)
   + Greater than or equal to (≥, =>==)
   + Less than (<)
-  + Less than or equal to (≤, =<==)
+  + Less than or equal to ( ≤, =<==)
 - Renaming of a column or relation (ρ, =rho=, =rename=)
 - Order by (τ, =tau=, =order by=), followed by a token to indicate the order of the column:
   + =ASC=, =asc=, =DESC=, =desc=
@@ -103,10 +106,37 @@ tokens =reljr= recognizes for the operation listed after each:
 Use =quit=.
 * Implementation Details
 ** Parser
+The grammar for the reljr parser and CLI commands is written in Extended
+Backus-Naur Form (EBNF). The grammar is entirely contained within the resource
+file [[file:resources/RAParser.bnf][RAParser.bnf]]. The grammar and operator precedence order for =QueryCommand=
+and all its child nonterminals were developed using the [[https://dbis-uibk.github.io/relax/help][railroad diagrams ]]in the
+RelaX wiki as a reference. The grammar and operator precedence for the CLI
+commands are unique to =reljr=. We used the third-party [[https://github.com/engelberg/instaparse][Instaparse]] parser
+generator library to construct a parser from the EBNF. Instaparse's detailed
+error reporting makes it possible for =reljr= to provide much better information
+about syntactic errors in user queries compared to those offered by RelaX.
+*** CLI Operation Precedence
+In decreasing order of precedence:
+1. Reading a table from a file
+2. Storing a query to a table in memory
+3. Renaming an in-memory table
+4. Deleting an in-memory table
+5. Writing a table to a file
+6. Listing all in-memory tables
+7. Quitting =reljr=
+8. A relational algebra expression (=RAExpression=)
+*** RAExpression Precedence
+These precedences are the same as those used by [[https://dbis-uibk.github.io/relax/help#relalg-operator-precedence][RelaX]]. In decreasing order of
+precedence:
+ 1. Projection, Selection, Rename Columns, Rename Relation, Group, Order By
+ 2. Cross Product, Inner Join, Natural Join, Division, a relation name, an
+    RAExpression within parentheses
+ 3. Intersection
+ 4. Union, Subtraction
+** REPL
 ** Evaluator
-** CLI
-** Input Format
-** Output
-*** Console
-*** File
+The source file [[file:src/reljr/interpreter.clj][interpeter.clj]] deals with the evaluation of relational algebra
+expressions and related computations.
+*** Evaluation of 
+
 * Future Work
