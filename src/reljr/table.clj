@@ -1,16 +1,16 @@
 (ns reljr.table
+  "Table abstraction for reljr interpreter. All functions assume that all tables
+  exist, contain the columns that are being used in the operation, that schemas
+  are unifiable, etc. These assumptions are dealt with by the functions in
+  interpreter."
   (:require [clojure.set :as set]))
-
-(def some-table
-  #{{:R/a 1 :R/b 2 :R/c 3}
-    {:R/a 1 :R/b 7 :R/c 2}
-    {:R/a 2 :R/b 5 :R/c 1}})
 
 (defn columns-of [table]
   (when-let [[r] (seq table)]
     (into #{} (keys r))))
 
 (defn project [table keys]
+  "Project out every value for every row in `table` that matches a key in keys."
   (let [val-funcs (map #(if (vector? %) (first %) %) keys)
         col-names (map #(if (vector? %) (second %) %) keys)
         projection (apply juxt val-funcs)]
