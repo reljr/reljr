@@ -100,7 +100,9 @@
                          rpred (relation-for rexp known-cols)]
                      #(<= (lpred %1 %2) (rpred %1 %2)))))
 
-(defn evaluate [expression relations]
+(defn evaluate
+  "Evaluates a relational algebra expression over any of the available relations."
+  [expression relations]
   (cond
     (string? expression) (get relations expression)
     (vector? expression)
