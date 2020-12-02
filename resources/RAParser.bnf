@@ -98,8 +98,8 @@ RenameRelation               = <rename_token> relation_name RAExpression
 RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RAExpression
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
-<ColToColOrCTCComma>         = Column <right_arrow> column_token |
-                               Column <right_arrow> column_token <comma> ColToColOrCTCComma 
+<ColToColOrCTCComma>         = Column <right_arrow> name |
+                               Column <right_arrow> name <comma> ColToColOrCTCComma
 
 
 
@@ -136,23 +136,23 @@ group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group
 
 count_token                  = "COUNT" | "count"
 
-AggregateCountStar           = <count_token> <lpar> <star> <rpar> <right_arrow> column_token
+AggregateCountStar           = <count_token> <lpar> <star> <rpar> <right_arrow> name
 
-AggregateCount               = <count_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateCount               = <count_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
-AggregateMin                 = <min_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateMin                 = <min_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <min_token>                  = "MIN" | "min"
 
-AggregateMax                 = <max_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateMax                 = <max_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <max_token>                  = "MAX" | "max"
 
-AggregateSum                 = <sum_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateSum                 = <sum_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <sum_token>                  = "SUM" | "sum"
 
-AggregateAvg                 = <avg_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateAvg                 = <avg_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <avg_token>                  = "AVG" | "avg"
 
@@ -210,49 +210,82 @@ subtraction_token            = "except" | "-" | "\\" | <whitespace> <subtraction
   ; Value Expressions ;
   ;;;;;;;;;;;;;;;;;;;;;*)
 
-<ValueExpression>            = <lpar> ValueExpression <rpar>             |
-                               <whitespace> ValueExpression <whitespace> |
-                               NotExpr                                   |
-                               AndExpr                                   |
-                               OrExpr                                    |
-                               EqualsExpr                                |
-                               NotEqualsExpr                             |
-                               GreaterExpr                               |
-                               GreaterEqualExpr                          |
-                               LessExpr                                  |
-                               LessEqualExpr
+<ValueExpression>            = ValueExpression7
 
-NotExpr                      = not_token ValueExpression
+<ValueExpression7>           = OrExpr                                                  |
+                               ValueExpression6
+<ValueExpression6>           = AndExpr                                                 |
+                               ValueExpression5
+<ValueExpression5>           = EqualsExpr                                              |
+                               NotEqualsExpr                                           |
+                               GreaterExpr                                             |
+                               GreaterEqualExpr                                        |
+                               LessExpr                                                |
+                               LessEqualExpr                                           |
+                               ValueExpression4
+<ValueExpression4>           = MinusExpr                                               |
+                               PlusExpr                                                |
+                               ValueExpression3
+<ValueExpression3>           = TimesExpr                                               |
+                               DivisionExpr                                            |
+                               ModExpr                                                 |
+                               ValueExpression2
+<ValueExpression2>           = NegationExpr                                            |
+                               ValueExpression1
+<ValueExpression1>           = NotExpr                                                 |
+                               ValueExpression0
+<ValueExpression0>           = <lpar> <whitespace> ValueExpression <whitespace> <rpar> |
+                               FunctionExpr                                            |
+                               ColNumOrString
+
+
+
+
+NotExpr                      = not_token ValueExpression1
 
 not_token                    = "¬" | "not" | <whitespace> <not_token> <whitespace>
 
-AndExpr                      = ValueExpression <and_token> ValueExpression
+AndExpr                      = ValueExpression6 <and_token> ValueExpression5
 
 and_token                    = "∧" | "&&" | "and" | <whitespace> <and_token> <whitespace>
 
-OrExpr                       = ValueExpression <or_token> ValueExpression
+OrExpr                       = ValueExpression7 <or_token> ValueExpression6
 
 or_token                     = "∨" | "||" | "or" | <whitespace> <or_token> <whitespace>
 
-EqualsExpr                   = ColNumOrString <whitespace> <"="> <whitespace> ColNumOrString
+EqualsExpr                   = ValueExpression5 <whitespace> <"="> <whitespace> ValueExpression4
 
-NotEqualsExpr                = ColNumOrString <ne_token> ColNumOrString
+NotEqualsExpr                = ValueExpression5 <ne_token> ValueExpression4
 
 ne_token                     = "!=" | "≠" | <whitespace> <ne_token> <whitespace>
 
-<ColNumOrString>             = Column | number | string
+GreaterExpr                  = ValueExpression5 <whitespace> <">"> <whitespace> ValueExpression4
 
-GreaterExpr                  = ColNumOrString <whitespace> <">"> <whitespace> ColNumOrString
-
-GreaterEqualExpr             = ColNumOrString <ge_token> ColNumOrString
+GreaterEqualExpr             = ValueExpression5 <ge_token> ValueExpression4
 
 ge_token                     = ">=" | "≥" | <whitespace> <ge_token> <whitespace>
 
-LessExpr                     = ColNumOrString <whitespace> <"<"> <whitespace> ColNumOrString
+LessExpr                     = ValueExpression5 <whitespace> <"<"> <whitespace> ValueExpression4
 
-LessEqualExpr                = ColNumOrString <le_token> ColNumOrString
+LessEqualExpr                = ValueExpression5 <le_token> ValueExpression4
 
 le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace>
+
+<ColNumOrString>             = Column | number | string
+
+MinusExpr                    = ValueExpression4 <whitespace> <"-"> <whitespace> ValueExpression3
+
+PlusExpr                     = ValueExpression4 <whitespace> <"+"> <whitespace> ValueExpression3
+
+TimesExpr                    = ValueExpression3 <whitespace> <"*"> <whitespace> ValueExpression2
+
+DivisionExpr                 = ValueExpression3 <whitespace> <"/"> <whitespace> ValueExpression2
+
+ModExpr                      = ValueExpression3 <whitespace> <"%"> <whitespace> ValueExpression2
+
+NegationExpr                 = <"-"> ValueExpression2
+
+FunctionExpr                 = name <whitespace> <lpar> <whitespace> ValueExpression (<comma> ValueExpression)* <whitespace> <rpar>
 
 
 (*;;;;;;;;;;;;;;;;;;;;
@@ -261,13 +294,13 @@ le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespac
 
 <ColumnOrColumnComma>        = Column | Column <comma> ColumnOrColumnComma
 
-ExprColumn                   = ValueExpression <right_arrow> column_token
+ExprColumn                   = ValueExpression <right_arrow> name
 
-Column                       = column_token | column_token <dot> relation_name
+Column                       = name | name <dot> relation_name
 
 string                       = #"'[\w\s\-_]*'"
 
-<column_token>               = #"[\w_]*"
+<name>                       = #"[\w_]+"
 
 number                       = #"\d+"
 
@@ -277,7 +310,7 @@ number                       = #"\d+"
 
 <whitespace>                 = #"\s*"
 
-<relation_name>              = <whitespace> #"\w+" <whitespace>
+<relation_name>              = <whitespace> name <whitespace>
 
 <lpar>                       = <whitespace> "(" <whitespace>
 
