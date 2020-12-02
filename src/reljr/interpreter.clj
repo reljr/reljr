@@ -19,7 +19,10 @@
    '% mod
    "length" count})
 
-(defn predicate-runner [predicate]
+(defn predicate-runner
+  "Convert a predicate expression into a predicate function, which is then called
+  with one or more records later."
+  [predicate]
   (cond
     (keyword? predicate) (fn [& colls] (some predicate colls))
     (number? predicate) (fn [& _] predicate)
