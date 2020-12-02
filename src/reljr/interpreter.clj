@@ -7,6 +7,21 @@
   (if (= (count col) 3)
     (keyword (get col 1) (get col 2))
     (first (filter #(= (get col 1) (name %)) known-cols))))
+(def predicate-fns
+  {'not not
+   'and #(and %1 %2)
+   'or #(or %1 %2)
+   '= =
+   '> >
+   '>= >=
+   '< <
+   '<= <=
+   '+ +
+   '- -
+   '* *
+   '/ /
+   '% mod
+   "length" count})
 
 (defn resolve-columns [raw-cols known-cols]
   (into [] (for [col raw-cols]
@@ -26,6 +41,15 @@
                               :AggregateMax (agg/maxcol t column)
                               :AggregateSum (agg/sum t column)
                               :AggregateAvg (agg/avg t column))]))))))
+(defn predicate-runner [predicate]
+  (cond
+    (keyword? predicate) (fn [& colls] (some predicate colls))
+    (number? predicate) (fn [& _] predicate)
+    (vector? predicate)
+    (let [[func & args] predicate
+          func (predicate-fns func)
+          args (apply juxt (map predicate-runner args))]
+      (fn [& records] (apply func (apply args records))))))
 
 (defn predicate-for [boolexpr known-cols]
   (case (first boolexpr)
@@ -62,6 +86,12 @@
                          lpred (predicate-for lexp known-cols)
                          rpred (predicate-for rexp known-cols)]
                      #(<= (lpred %) (rpred %)))))
+(def aggregate-fns
+  {'count agg/cntcol
+   'min agg/mincol
+   'max agg/maxcol
+   'sum agg/sum
+   'avg agg/avg})
 
 (defn relation-for [boolexpr known-cols]
   (case (first boolexpr)
@@ -99,6 +129,14 @@
                          lpred (relation-for lexp known-cols)
                          rpred (relation-for rexp known-cols)]
                      #(<= (lpred %1 %2) (rpred %1 %2)))))
+(defn aggregation-runner [aggregation]
+  (let [aggregation
+        (for [[col [op arg]] aggregation]
+          [col [(aggregate-fns op) (predicate-runner arg)]])]
+    (fn [records]
+      (into {}
+            (for [[col [op arg]] aggregation]
+              [col (op records arg)])))))
 
 (defn evaluate
   "Evaluates a relational algebra expression over any of the available relations."
@@ -107,70 +145,42 @@
     (string? expression) (get relations expression)
     (vector? expression)
     (case (first expression)
-      :Projection (let [cols (butlast (rest expression))
-                        subexpr (last expression)
+      :projection (let [[_ subexpr cols] expression
                         subeval (evaluate subexpr relations)
-                        known-cols (table/columns-of subeval)
-                        resolved-cols (for [col cols]
-                                        (case (first col)
-                                          :ExprColumn [(predicate-for (nth col 1) known-cols)
-                                                       (keyword (nth col 2))]
-                                          (resolve-column col known-cols)))]
-                    (table/project subeval resolved-cols))
-      :Selection (let [[_ test subexpr] expression
-                       subeval (evaluate subexpr relations)
-                       pred (predicate-for test (table/columns-of subeval))]
-                   (table/select subeval pred))
-      :RenameRelation (let [[_ name subexpr] expression
-                            subeval (evaluate subexpr relations)]
-                        (table/rename subeval name))
-      :RenameColumn (let [cols (partition 2 (butlast (rest expression)))
-                          subexpr (last expression)
-                          subeval (evaluate subexpr relations)
-                          known-cols (table/columns-of subeval)
-                          cols (for [[old new] cols]
-                                 (let [c (resolve-column old known-cols)]
-                                   [c (keyword (namespace c) new)]))]
-                      (reduce (fn [table [old new]]
-                                (table/rename-column table old new))
-                              subeval
-                              cols))
-      :OrderBy (let [cols (butlast (rest expression))
-                     subexpr (last expression)
-                     subeval (evaluate subexpr relations)
-                     known-cols (table/columns-of subeval)
-                     cols (for [[o c] cols]
-                            [(resolve-column c known-cols)
-                             ({:AscendingColumn #(< (compare %1 %2) 0)
-                               :DescendingColumn #(> (compare %1 %2) 0)}
-                              o)])]
-                 (table/order-records-by subeval (into [] cols)))
-      :GroupBy (let [cols (butlast (rest expression))
-                     [group-cols agg-cols] (split-with #(= :Column (first %)) cols)
-                     subexpr (last expression)
-                     subeval (evaluate subexpr relations)
-                     known-cols (table/columns-of subeval)
-                     group-cols (resolve-columns group-cols known-cols)
-                     agg (aggregation-for agg-cols known-cols)]
-                 (table/group-records-by subeval group-cols agg))
-      :Union (let [[_ lexp rexp] expression
+                        cols (map (fn [[c n]] [(predicate-runner c) n]) cols)]
+                    (table/project subeval cols))
+      :selection (let [[_ subexpr pred] expression
+                       subeval (evaluate subexpr relations)]
+                   (table/select subeval (predicate-runner pred)))
+      :rename-relation (let [[_ subexpr name] expression
+                             subeval (evaluate subexpr relations)]
+                         (table/rename subeval name))
+      :rename-column (let [[_ subexpr old new] expression
+                           subeval (evaluate subexpr relations)]
+                       (table/rename-column subeval old new))
+      :order-by (let [[_ subexpr cols] expression
+                      subeval (evaluate subexpr relations)]
+                  (table/order-records-by subeval cols))
+      :group-by (let [[_ subexpr group-cols agg] expression
+                      subeval (evaluate subexpr relations)
+                      agg (aggregation-runner agg)]
+                  (table/group-records-by subeval group-cols agg))
+      :union (let [[_ lexp rexp] expression
                    lval (evaluate lexp relations)
                    rval (evaluate rexp relations)]
                (set/union lval rval))
-      :Subtraction (let [[_ lexp rexp] expression
+      :subtraction (let [[_ lexp rexp] expression
                          lval (evaluate lexp relations)
                          rval (evaluate rexp relations)]
                      (set/difference lval rval))
-      :Intersection (let [[_ lexp rexp] expression
+      :intersection (let [[_ lexp rexp] expression
                           lval (evaluate lexp relations)
                           rval (evaluate rexp relations)]
                       (set/intersection lval rval))
-      :Division (let [[_ lexp rexp] expression
+      :division (let [[_ group-cols lexp rexp] expression
                       lval (evaluate lexp relations)
                       rval (evaluate rexp relations)
-                      lcols (table/columns-of lval)
-                      rcols (table/columns-of rval)
-                      group-cols (set/difference lcols rcols)]
+                      rcols (table/columns-of rval)]
                   (table/project
                    (table/select
                     (table/group-records-by
@@ -178,18 +188,15 @@
                      (fn [g] {'keep (= rval (table/project g rcols))}))
                     #(% 'keep))
                    group-cols))
-      :CrossProduct (let [[_ lexp rexp] expression
+      :cross-product (let [[_ lexp rexp] expression
+                           lval (evaluate lexp relations)
+                           rval (evaluate rexp relations)]
+                       (table/cross-product lval rval))
+      :inner-join (let [[_ lexp rexp rel] expression
+                        lval (evaluate lexp relations)
+                        rval (evaluate rexp relations)]
+                    (table/inner-join lval rval (predicate-runner rel)))
+      :natural-join (let [[_ lexp rexp] expression
                           lval (evaluate lexp relations)
                           rval (evaluate rexp relations)]
-                      (table/cross-product lval rval))
-      :InnerJoin (let [[_ lexp boolexpr rexp] expression
-                       lval (evaluate lexp relations)
-                       rval (evaluate rexp relations)
-                       known-cols (set/union (table/columns-of lval)
-                                             (table/columns-of rval))
-                       rel (relation-for boolexpr known-cols)]
-                   (table/inner-join lval rval rel))
-      :NaturalJoin (let [[_ lexp rexp] expression
-                         lval (evaluate lexp relations)
-                         rval (evaluate rexp relations)]
-                     (table/natural-join lval rval)))))
+                      (table/natural-join lval rval)))))
