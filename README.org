@@ -134,9 +134,56 @@ precedence:
  3. Intersection
  4. Union, Subtraction
 ** REPL
-** Evaluator
+** Interpreter
 The source file [[file:src/reljr/interpreter.clj][interpeter.clj]] deals with the evaluation of relational algebra
-expressions and related computations.
-*** Evaluation of 
+expressions and related computations. However, the functions in this file
+(notably =evaluate=) depend on the table abstraction specified in [[file:src/reljr/table.clj][table.clj]].
+Because of this, it is necessary to discuss the implementation of the functions
+that constitute the table abstraction before discussing the implementation of
+the interpreter itself.
+*** The Table Abstraction
+=reljr= stores tables internally as sets of maps. This is a convenient
+representation: sets trivially guarantee uniqueness of tuples and maps keep
+column information close to table data. As an example, consider the table [[example_table][below]].
+The Clojure code below the table shows the same table as a Clojure data
+structure (assuming the table was read from the file =foo.csv=.)
+#+NAME:example_table
+#+caption: Table for the relation =foo=
+| R.x | S.x | R.y |
+|-----+-----+-----|
+|   5 | 6.3 |   6 |
+|   3 | 9.4 |   2 |
+
+#+NAME: clojure_table_foo
+#+begin_src clojure
+{"foo"
+   #{{:R/x 5 :S/x 6.3 :R/y 6}
+     {:R/x 3 :S/x 9.4 :R/y 2}}}
+#+end_src
+**** Project
+
+The =project= function expects to receive two arguments, =table= and =keys=. For the query =pi x,y foo= and the same data structure as [[clojure_table_foo][above]], the arguments are as follows:
+#+begin_src clojure
+  table = #{{:R/x 5 :S/x 6.3 :R/y 6} {:R/x 3 :S/x 9.4 :R/y 2}}
+  keys = (:R/x :R/y)
+#+end_src
+The =project= function takes advantage of that fact that Clojure keys (e.g.
+=:R/x=) can be used as functions to get the value from a map that is associated
+with that key (as in =(:R/x {:R/x 2})=, which returns =2=.) =val-funcs= is then
+a function that applies each of the keys to a row of the table. =map= performs
+the actual iteration over table rows. The return value of this function is of
+the same form as the input (a set of maps) but with only the requested columns:
+#+begin_src clojure
+#{#:R{:x 3, :y 2} #:R{:x 5, :y 6}}
+#+end_src
+**** Select
+**** Rename
+**** Rename-Column
+**** Order-Records-By
+**** Group-Records-By
+**** Cross-Product
+**** Inner-Join
+**** Natural-Join
+*** Evaluation of Relational Algebra Expressions
 
 * Future Work
