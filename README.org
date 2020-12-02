@@ -219,9 +219,9 @@ These comparators are used in the =ordering= function (contained within
 =order-records-by=) to determine row order. Once the =ordering= function has
 been built up, it is applied to the rows of the table by =into=. =into='s
 arguments are an empty =sorted-set=, whose comparator is now the entire
-=ordering= function. Into works by taking every member of =table= and adding it
-to the set. When each element gets added, it is placed according to the
-comparator.
+=ordering= function. =into= works by taking every member of =table= and adding
+it to the set. When each element gets added, it is placed in the set according
+to the comparator (the =ordering= function).
 **** Group-Records-By
 **** Cross-Product
 **** Inner-Join
