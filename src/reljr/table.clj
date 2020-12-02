@@ -41,21 +41,35 @@
         (map (fn [r] (-> r (assoc to (from r)) (dissoc from))))
         table))
 
-(defn order-records-by [table col-rules]
+(defn order-records-by
+  "Order the tuples in table by using the rules in col-rules.
+
+  We consider the 'remaining' cols in addition to the order-by cols because of
+  the case where two tuples match on all but one column. Crucially, the unique
+  column must not be one of the order-by cols. In this scenario, one of the two
+  records will be dropped, which is probably not desired behavior.
+  "
+  [table col-rules]
   (let [used-cols (into #{} (map first) col-rules)]
     (if-let [first-record (first table)]
       (let [remaining-cols (set/difference (into #{} (keys first-record))
                                            used-cols)
             full-rules (concat col-rules (map (fn [c] [c <]) remaining-cols))]
         (letfn [(ordering [a b]
+                  ;; a and b are tuples in the table
                   (loop [rules full-rules]
                     (if-let [[[column ord]] (seq rules)]
                       (let [l (column a)
                             r (column b)]
+                        ;; apply the actual comparator for this column
                         (cond (ord l r) true
                               (ord r l) false
+                              ;; when the two records were equal, we must use the
+                              ;; other rules
                               :otherwise (recur (rest rules))))
                       false)))]
+          ;; create an empty sorted set whose comparator is the ordering
+          ;; function
           (into (sorted-set-by ordering) table)))
       #{})))
 
