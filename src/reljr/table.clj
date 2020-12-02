@@ -54,7 +54,7 @@
     (if-let [first-record (first table)]
       (let [remaining-cols (set/difference (into #{} (keys first-record))
                                            used-cols)
-            full-rules (concat col-rules (map (fn [c] [c <]) remaining-cols))]
+            full-rules (concat col-rules (map (fn [c] [c #(< (compare %1 %2) 0)]) remaining-cols))]
         (letfn [(ordering [a b]
                   ;; a and b are tuples in the table
                   (loop [rules full-rules]
