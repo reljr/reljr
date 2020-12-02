@@ -10,7 +10,7 @@
   (reduce + (map column table)))
 
 (defn cntcol [table column]
-  (reduce clojure.core/count table))
+  (clojure.core/count table))
 
 (defn avg [table column]
 
