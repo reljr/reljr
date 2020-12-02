@@ -27,15 +27,16 @@ RAExpression precedence:
 -   Union, Subtraction
 *)
 
-<Command>                    = ReadCommand    /
-                               ReadAsCommand  /
-                               StoreAsCommand /
-                               RenameCommand  /
-                               DeleteCommand  /
-                               WriteCommand   /
-                               WriteAsCommand /
-                               ListCommand    /
-                               QuitCommand    /
+<Command>                    = ReadCommand       /
+                               ReadAsCommand     /
+                               StoreAsCommand    /
+                               RenameCommand     /
+                               DeleteCommand     /
+                               WriteCommand      /
+                               WriteAsCommand    /
+                               ListCommand       /
+                               QuitCommand       /
+                               PreprocessCommand /
                                QueryCommand
 
 ReadCommand                  = <"read"> <whitespace> filename
@@ -47,6 +48,7 @@ WriteCommand                 = <"write"> <whitespace> relation_name
 WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace> <"as"> <whitespace> filename
 ListCommand                  = <"list">
 QuitCommand                  = <"quit">
+PreprocessCommand            = <"preprocess"> RAExpression
 QueryCommand                 = RAExpression
 
 <RAExpression>               = Projection                              |
