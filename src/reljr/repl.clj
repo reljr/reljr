@@ -20,7 +20,8 @@
     (pp/cl-format true "~:{~&~A => ~<(~;~@{~A~^, ~:_~}~;)~:>~%~}" preformatted-tables)))
 
 (defn -main []
-  (binding [*out* (pp/get-pretty-writer *out*)]
+  (binding [pp/*print-right-margin* 80
+            *out* (pp/get-pretty-writer *out*)]
     (loop [tables {}]
       (pp/cl-format true "~&reljr> ")
       (flush)
