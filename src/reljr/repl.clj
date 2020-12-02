@@ -33,9 +33,16 @@
               :ReadCommand (recur (merge tables (files/get-table-data (second input))))
               :ReadAsCommand (recur (merge tables (files/get-table-data (nth input 1)
                                                                         (nth input 2))))
-              :StoreAsCommand (recur (assoc tables
-                                            (nth input 2)
-                                            (interp/evaluate (nth input 1) tables)))
+              :StoreAsCommand (recur (try
+                                       (assoc tables
+                                              (nth input 2)
+                                              (interp/evaluate
+                                               (first (rpp/preprocess-query (nth input 1)
+                                                                            tables))
+                                               tables))
+                                       (catch Exception e
+                                         (print (ex-message e))
+                                         tables)))
               :RenameCommand (recur (dissoc (assoc tables
                                                    (nth input 2)
                                                    (get tables (nth input 1)))
@@ -50,5 +57,15 @@
               :ListCommand (do (print-tables tables)
                                (recur tables))
               :QuitCommand ()
-              :QueryCommand (do (pp/print-table (interp/evaluate (nth input 1) tables))
+              :PreprocessCommand (do (try
+                                       (print (rpp/preprocess-query (nth input 1) tables))
+                                       (catch Exception e
+                                         (print (ex-message e))))
+                                     (recur tables))
+              :QueryCommand (do (try
+                                  (pp/print-table (interp/evaluate
+                                                   (first (rpp/preprocess-query (nth input 1) tables))
+                                                   tables))
+                                  (catch Exception e
+                                    (print (ex-message e))))
                                 (recur tables)))))))))
