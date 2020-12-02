@@ -4,7 +4,8 @@
             [instaparse.core :as insta]
             [reljr.file-handler :as files]
             [reljr.parser :as parser]
-            [reljr.interpreter :as interp])
+            [reljr.interpreter :as interp]
+            [reljr.preprocessor :as rpp])
   (:gen-class))
 
 (defn print-tables [tables]

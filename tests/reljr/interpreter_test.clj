@@ -1,7 +1,8 @@
 (ns reljr.interpreter-test
-  (:require  [clojure.test :as t])
-  (:require [reljr.interpreter :as i])
-  (:require [reljr.parser :as p]))
+  (:require [clojure.test :as t]
+            [reljr.preprocessor :as rpp]
+            [reljr.interpreter :as i]
+            [reljr.parser :as p]))
 
 (def table-foo
   {"Foo" #{{:R/x 5 :S/x 6.3 :R/y 6} {:R/x 3 :S/x 9.4 :R/y 2}}})
