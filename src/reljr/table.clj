@@ -73,8 +73,15 @@
           (into (sorted-set-by ordering) table)))
       #{})))
 
-(defn group-records-by [table group-cols aggregation]
+(defn group-records-by
+  "Return a new table whose columns are those in group-cols and the column in
+  aggregation."
+  [table group-cols aggregation]
+  ;; if we have more than zero columns to group on, group on them
   (if (seq group-cols)
+    ;; record-groups is a map whose keys are a vector of the values of the
+    ;; columns that we want to extract in group-cols; the values of the map are
+    ;; lists of the tuples that contained that value.
     (let [record-groups (group-by (apply juxt group-cols) table)
           grouped-records
           (map (fn [[group records]]
