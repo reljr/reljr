@@ -103,6 +103,8 @@
               (into r1 r2))))
 
 (defn make-natural-join-test [table1 table2]
+  "Return the inner-join condition and the columns that should be projected out
+  to accomplish a natural join using project and inner-join."
   (let [cols1 (keys (first table1))
         cols2 (keys (first table2))
         cols (into #{} (concat cols1 cols2))
@@ -116,7 +118,10 @@
         tests (map first test-groups)
         dropped-cols (map second test-groups)
         proj-cols (reduce set/difference cols dropped-cols)]
+    ;; left and right records, the argument to the lambda
     [(fn [l r]
+       ;; "left juxt" and "right juxt", a test from above that looks like:
+       ;; (apply juxt [:S/a])
        (every? (fn [[lj rj]]
                  (every? (set (rj r))
                          (lj l)))
@@ -124,5 +129,7 @@
      proj-cols]))
 
 (defn natural-join [table1 table2]
+  "Perform the natural join by combining projection, inner join, and a custom
+  test function."
   (let [[test cols] (make-natural-join-test table1 table2)]
     (project (inner-join table1 table2 test) cols)))
