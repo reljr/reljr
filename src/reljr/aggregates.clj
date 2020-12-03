@@ -9,10 +9,9 @@
 (defn sum [table column]
   (reduce + (map column table)))
 
-(defn cntcol [table column]
+(defn cntcol [table _]
   (clojure.core/count table))
 
 (defn avg [table column]
-
   (/ (sum table column)
      (clojure.core/count table)))
