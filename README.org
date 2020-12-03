@@ -6,6 +6,8 @@
 #+LATEX_HEADER: \usepackage{unicode-math}
 #+LATEX_HEADER: \setmainfont{FreeSerif}
 #+LATEX_HEADER: \setlength\parindent{0pt}
+#+LATEX_HEADER: \usepackage[T1]{fontenc}
+#+LATEX_HEADER: \usepackage{inconsolata}
 #+OPTIONS: date:nil toc:nil
 
 * Introduction
@@ -247,8 +249,107 @@ selected on; the function places it into the resulting table later on (inside of
 the =map=.) The key for each vector is a vector of the rows that contained that
 value.
 **** Cross-Product
-**** Inner-Join
-**** Natural-Join
-*** Evaluation of Relational Algebra Expressions
 
+We used Clojure's =into= to accomplish this. The outer =into= places the result of
+the =for= into a set. The =for= loop is equivalent to the following for loop in
+pseudocode that is a little more imperative:
+#+begin_src python
+for r1 in table1:
+    for r2 in table2:
+        put every r2 item into r1
+#+end_src
+The result accumulates as the return value of the =for= loop, which is then
+placed into the set by the outer =into= as discussed earlier.
+**** Inner-Join
+
+The =inner-join= function is implemented in the same manner as =cross-product=,
+but with a test condition applied. The test condition comes from
+[[file:src/reljr/interpreter.clj][=predicate-runner=]] just as it does in =select=.
+**** Natural-Join
+
+The =natural-join= function is implemented using =project= and =inner-join=,
+where both the test condition for the inner join and the columns to be projected
+out are computed by the =make-natural-join-test= function. We will show the
+execution of this function using the following tables as examples:
+
+#+begin_src clojure
+ {"zoop"
+  #{#:S{:a 4, :z "d", :g "f"}
+    #:S{:a 5, :z "d", :g "b"}
+    #:S{:a 6, :z "e", :g "f"}
+    #:S{:a 1, :z "a", :g "d"}
+    #:S{:a 3, :z "g", :g "g"}}}
+#+end_src
+
+#+begin_src clojure
+{"bar"
+ #{#:R{:a 1, :b "a", :c "d"}
+   #:R{:a 4, :b "d", :c "f"}
+   #:R{:a 3, :b "c", :c "c"}
+   #:R{:a 5, :b "d", :c "b"}
+   #:R{:a 6, :b "e", :c "f"}}}
+#+end_src
+
+
+The example query for the two tables is =zoop natural join bar=.
+
+Our natural join implementation mirrors RelaX's in that it always keeps the join
+column from the *left* of the two tables in the natural join. The complexity of
+=make-natural-join-test= arises from the possibility for two specific join
+scenarios:
+ - Two tables may each have multiple columns that can be join on (e.g. if =zoop=
+   and =bar= above each had a column =b=), or
+ - Either (or both) of the two tables has multiple columns with the same name
+   but different namespaces (e.g. if =zoop= had an =S.a= column and a =Quux.a=
+   column)
+
+Because of this, the test condition must determine, for every pair of join
+columns for every pair of records in the table, which records will be kept.
+
+Let's take a close look at the test function returned by
+=make-natural-join-test= :
+#+begin_src clojure
+(fn [l r]
+  (every? (fn [[lj rj]]
+            (every? (set (rj r))
+                    (lj l)))
+          tests))
+#+end_src
+It's more instructive if we swap in some actual values; we'll choose two tuples
+that will make the test return =true=:
+
+#+name: anonymous_func_example
+#+begin_src clojure
+(fn [{:S/a 4, :S/z "d", :S/g "f"} {:R/a 4, :R/b "d", :R/c "f"}]
+  (every? (fn [[lj rj]]
+            (every? (set (rj {:R/a 4, :R/b "d", :R/c "f"}))
+                    (lj {:S/a 4, :S/z "d", :S/g "f"})))
+          [(apply juxt [:S/a]) (apply juxt [:R/a])]))
+#+end_src
+=lj= and =rj= take the values of the vector right after the inner =fn= (=apply
+juxt...=); this has the affect of applying a key to a map, which returns the
+value of that key from the map:
+#+begin_src clojure
+((apply juxt [:S/a])  {:S/a 4, :S/z "d", :S/g "f"}) ;; => 4
+((apply juxt [:R/a])  {:R/a 4, :S/z "d", :S/g "f"}) ;; => 4
+#+end_src
+The last trick in the function here is the call to =(set)=, which makes a set
+from the result of the inner function application (here, it's the number 4). A
+clojure set can be used as a function to determine if an item is contained in
+the set, as shown in the following examples:
+#+begin_src clojure
+((set [4 2 3]) 5) ;; => nil
+((set [4 2 3]) 2) ;; => 2
+(map (set [4 2 3]) [5 1 2 6 3]) ;; => (nil nil 2 nil 3)
+#+end_src
+
+Going back to the [[anonymous_func_example][code]], we see that all we've done is create a =set= with 4 in
+it (the value of applying the keys to the right tuple) and checked that the
+values from the left tuple are all contained in that set. If each table had more
+than one column that matched columns from the other table, the =tests= list
+would contain a pair of test functions for each pair of columns, and we would
+iterate through all of those with the outer =every?=.
+
+
+  
 * Future Work
