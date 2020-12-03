@@ -223,6 +223,27 @@ arguments are an empty =sorted-set=, whose comparator is now the entire
 it to the set. When each element gets added, it is placed in the set according
 to the comparator (the =ordering= function).
 **** Group-Records-By
+
+The =group-records-by= function returns a new table with the desired columns and
+new columns for any aggregates requested by the user. This function relies on
+the Clojure built-in =group-by=. We consider as an example the query =gamma b;
+count(b) -> baz bar=, on the following relation:
+#+begin_src clojure
+ #{{:R/a 1, :R/b "a", :R/c "d"}
+   {:R/a 4, :R/b "d", :R/c "f"}
+   {:R/a 3, :R/b "c", :R/c "c"}
+   {:R/a 5, :R/b "d", :R/c "b"}
+   {:R/a 6, :R/b "e", :R/c "f"}}
+#+end_src
+Calling =group-by= on table gives the following:
+#+begin_src clojure
+{["a"] [{:R/a 1, :R/b "a", :R/c "d"}]
+ ["d"] [{:R/a 4, :R/b "d", :R/c "f"} {:R/a 5, :R/b "d", :R/c "b"}]
+ ["c"] [{:R/a 3, :R/b "c", :R/c "c"}], ["e"] [{:R/a 6, :R/b "e", :R/c "f"}]}
+#+end_src
+The first vector in each pair of this map is the value for the column we have
+selected on; the function places it into the resulting table later on (inside of
+the =map=.)
 **** Cross-Product
 **** Inner-Join
 **** Natural-Join
