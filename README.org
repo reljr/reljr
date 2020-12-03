@@ -239,11 +239,13 @@ Calling =group-by= on table gives the following:
 #+begin_src clojure
 {["a"] [{:R/a 1, :R/b "a", :R/c "d"}]
  ["d"] [{:R/a 4, :R/b "d", :R/c "f"} {:R/a 5, :R/b "d", :R/c "b"}]
- ["c"] [{:R/a 3, :R/b "c", :R/c "c"}], ["e"] [{:R/a 6, :R/b "e", :R/c "f"}]}
+ ["c"] [{:R/a 3, :R/b "c", :R/c "c"}]
+ ["e"] [{:R/a 6, :R/b "e", :R/c "f"}]}
 #+end_src
-The first vector in each pair of this map is the value for the column we have
+The first vector (the keys of this map) is the value for the column we have
 selected on; the function places it into the resulting table later on (inside of
-the =map=.)
+the =map=.) The key for each vector is a vector of the rows that contained that
+value.
 **** Cross-Product
 **** Inner-Join
 **** Natural-Join
