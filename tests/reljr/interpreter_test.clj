@@ -25,12 +25,6 @@
 (def parse #(first (p/relational-algebra-parser %)))
 (def evaluate #(i/evaluate (first (rpp/preprocess-query %1 %2)) %2))
 
-(t/deftest Resolve-Columns
-  (t/is (= (i/resolve-columns [[:Column "foo"]] #{:R/foo})
-           [:R/foo]))
-  (t/is (= (i/resolve-columns [[:Column "foo"] [:Column "Bar" "foo"]] #{:R/foo})
-           [:R/foo :Bar/foo])))
-
 (t/deftest Evaluate
   (t/is (= (evaluate "Foo" {"Foo" #{{}}})
            #{{}}))
