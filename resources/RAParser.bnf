@@ -63,7 +63,9 @@ QueryCommand                 = RAExpression
 
 <MidPrecedenceBinOp>         = Intersection | HighPrecedenceBinOp
 
-<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin | Division | relation_name | <lpar> RAExpression <rpar>
+<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin | Division | BinOpLeaf
+
+<BinOpLeaf>                  = relation_name | <lpar> RAExpression <rpar>
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
@@ -160,35 +162,35 @@ AggregateAvg                 = <avg_token> <lpar> ValueExpression <rpar> <right_
   ; binary operations ;
   ;;;;;;;;;;;;;;;;;;;;;*)
 
-CrossProduct                 = HighPrecedenceBinOp <cross_product_token> RAExpression
+CrossProduct                 = HighPrecedenceBinOp <cross_product_token> BinOpLeaf
 
 cross_product_token          = "*" | "cross join" | "×" | <whitespace> <cross_product_token> <whitespace>
 
 
 
 
-InnerJoin                  = HighPrecedenceBinOp <inner_join_token> ValueExpression RAExpression
+InnerJoin                  = HighPrecedenceBinOp <inner_join_token> ValueExpression BinOpLeaf
 
 inner_join_token           = "⋈" | "⨝" | "join" | "inner join" | <whitespace> <inner_join_token> <whitespace>
 
 
 
 
-NaturalJoin                  = HighPrecedenceBinOp <natural_join_token> RAExpression
+NaturalJoin                  = HighPrecedenceBinOp <natural_join_token> BinOpLeaf
 
 natural_join_token           = "⋈" | "⨝" | "natural join" | <whitespace> <natural_join_token> <whitespace>
 
 
 
 
-Division                     = HighPrecedenceBinOp <division_token> RAExpression
+Division                     = HighPrecedenceBinOp <division_token> BinOpLeaf
 
 division_token               = "÷" | "/" | <whitespace> <division_token> <whitespace>
 
 
 
 
-Intersection                 = MidPrecedenceBinOp <intersection_token> HighPrecedenceBinOp
+Intersection                 = MidPrecedenceBinOp <intersection_token> BinOpLeaf
 
 intersection_token           = "intersect" | "∩" | <whitespace> <intersection_token> <whitespace>
 
