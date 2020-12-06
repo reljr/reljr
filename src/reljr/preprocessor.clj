@@ -106,130 +106,181 @@
                       :AggregateAvg ['avg column-expr])]))))
 
 (defn preprocess-query [query relations]
-  (cond
-    (string? query) (if-let [relation (get relations query)]
-                      [query (table/columns-of relation)]
-                      (throw (ex-info (str "No relation named: " query)
-                                      {:type :no-table
-                                       :name query})))
-    (vector? query)
-    (case (first query)
-      :Projection (let [cols (butlast (rest query))
-                        [subexpr known-cols] (preprocess-query (last query) relations)
-                        resolved-cols (for [col cols]
-                                        (case (first col)
-                                          :ExprColumn [(preprocess-predicate (nth col 1) known-cols)
-                                                       (keyword (nth col 2))]
-                                          (let [c (resolve-column col known-cols)]
-                                            [c c])))]
-                    [[:projection subexpr resolved-cols]
-                     (into [] (map second) resolved-cols)])
-      :Selection (let [[_ test subexpr] query
-                       [subexpr known-cols] (preprocess-query subexpr relations)
-                       pred (preprocess-predicate test known-cols)]
-                   [[:selection subexpr pred] known-cols])
-      :RenameRelation (let [[_ rel-name subexpr] query
-                            [subexpr known-cols] (preprocess-query subexpr relations)]
-                        [[:rename-relation subexpr rel-name]
-                         (mapv #(keyword rel-name (name %)) known-cols)])
-      :RenameColumn (let [cols (partition 2 (butlast (rest query)))
-                          subexpr (last query)
-                          [subexpr known-cols] (preprocess-query subexpr relations)
-                          cols (for [[old new] cols]
-                                 (let [c (resolve-column old known-cols)]
-                                   [c (keyword (namespace c) new)]))
-                          cols (into {} cols)]
-                      [(reduce (fn [subexpr [old new]]
-                                 [:rename-column subexpr old new])
-                               subexpr
-                               cols)
-                       (mapv #(get cols % %) known-cols)])
-      :OrderBy (let [cols (butlast (rest query))
-                     subexpr (last query)
-                     [subexpr known-cols] (preprocess-query subexpr relations)
-                     cols (for [[o c] cols]
-                            [(resolve-column c known-cols)
-                             ({:AscendingColumn #(< (compare %1 %2) 0)
-                               :DescendingColumn #(> (compare %1 %2) 0)}
-                              o)])]
-                 [[:order-by subexpr (into [] cols)]
-                  known-cols])
-      :GroupBy (let [cols (butlast (rest query))
-                     [group-cols agg-cols] (split-with #(= :Column (first %)) cols)
-                     subexpr (last query)
-                     [subexpr known-cols] (preprocess-query subexpr relations)
-                     group-cols (resolve-columns group-cols known-cols)
-                     agg (preprocess-aggregation agg-cols known-cols)]
-                 [[:group-by subexpr group-cols agg]
-                  (into [] (aggregation-columns agg-cols known-cols))])
-      :Union (let [[_ lexp rexp] query
-                   [lexp lcols] (preprocess-query lexp relations)
-                   [rexp rcols] (preprocess-query rexp relations)]
-               (if (= (set lcols) (set rcols))
-                 [[:union lexp rexp] lcols]
-                 (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
-                                 {:type :incompatible-schema
-                                  :left lcols
-                                  :right rcols}))))
-      :Subtraction (let [[_ lexp rexp] query
-                         [lexp lcols] (preprocess-query lexp relations)
-                         [rexp rcols] (preprocess-query rexp relations)]
-                     (if (= (set lcols) (set rcols))
-                       [[:subtraction lexp rexp] lcols]
-                       (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
-                                       {:type :incompatible-schema
-                                        :left lcols
-                                        :right rcols}))))
-      :Intersection (let [[_ lexp rexp] query
-                          [lexp lcols] (preprocess-query lexp relations)
-                          [rexp rcols] (preprocess-query rexp relations)]
-                      (if (= (set lcols) (set rcols))
-                        [[:intersection lexp rexp] lcols]
-                        (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
-                                        {:type :incompatible-schema
-                                         :left lcols
-                                         :right rcols}))))
-      :Division (let [[_ lexp rexp] query
-                      [lexp lcols] (preprocess-query lexp relations)
-                      [rexp rcols] (preprocess-query rexp relations)
-                      group-cols (set/difference (set lcols) (set rcols))]
-                  (if (= (set/difference (set rcols) (set lcols)) #{})
-                    [[:division group-cols lexp rexp] (vec group-cols)]
-                    (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
-                                    {:type :incompatible-schema
-                                     :left lcols
-                                     :right rcols}))))
-      :CrossProduct (let [[_ lexp rexp] query
-                          [lexp lcols] (preprocess-query lexp relations)
-                          [rexp rcols] (preprocess-query rexp relations)]
-                      (if (= (set/intersection (set lcols) (set rcols)) #{})
-                        [[:cross-product lexp rexp] (into lcols rcols)]
-                        (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
-                                        {:type :incompatible-schema
-                                         :left lcols
-                                         :right rcols}))))
-      :InnerJoin (let [[_ lexp boolexpr rexp] query
-                       [lexp lcols] (preprocess-query lexp relations)
-                       [rexp rcols] (preprocess-query rexp relations)
-                       known-cols (set/union (set lcols) (set rcols))
-                       rel (preprocess-predicate boolexpr known-cols)]
-                   (if (= (set/intersection (set lcols) (set rcols)) #{})
-                     [[:inner-join lexp rexp rel] (into lcols rcols)]
+  (-> (cond
+        (string? query) (if-let [relation (get relations query)]
+                          {:type :relation :relation query
+                           ::eutils/columns (table/columns-of relation)}
+                          (throw (ex-info (str "No relation named: " query)
+                                          {:type :no-table
+                                           :name query})))
+        (vector? query)
+        (case (first query)
+          :Projection (let [cols (butlast (rest query))
+                            sub (preprocess-query (last query) relations)
+                            known-cols (::eutils/columns sub)
+                            resolved-cols (for [col cols]
+                                            (case (first col)
+                                              :ExprColumn [(preprocess-predicate (nth col 1) known-cols)
+                                                           (keyword (nth col 2))]
+                                              (let [c (resolve-column col known-cols)]
+                                                [c c])))]
+                        {:type :projection
+                         :sub sub
+                         :columns resolved-cols})
+          :Selection (let [[_ test sub] query
+                           sub (preprocess-query sub relations)
+                           known-cols (::eutils/columns sub)
+                           pred (preprocess-predicate test known-cols)]
+                       {:type :selection
+                        :sub sub
+                        :predicate pred})
+          :RenameRelation (let [[_ rel-name sub] query
+                                sub (preprocess-query sub relations)
+                                known-cols (::eutils/columns sub)]
+                            (if (= (count known-cols) (count (into #{} (map name) known-cols)))
+                              {:type :rename-relation
+                               :sub sub
+                               :name rel-name}
+                              (throw (ex-info (str "Normalizing column prefixes would produce an ambiguity: "
+                                                   known-cols)
+                                              {:type :ambiguous-columns
+                                               :columns known-cols}))))
+          :RenameColumn (let [cols (partition 2 (butlast (rest query)))
+                              sub (last query)
+                              sub (preprocess-query sub relations)
+                              known-cols (::eutils/columns sub)
+                              cols (for [[old new] cols]
+                                     (let [c (resolve-column old known-cols)]
+                                       [c (keyword (namespace c) new)]))
+                              cols (into {} cols)]
+                          (reduce (fn [sub [old new]]
+                                    (eutils/propogate-column-metadata
+                                     {:type :rename-column
+                                      :sub sub
+                                      :old old :new new}))
+                                  sub
+                                  cols))
+          :OrderBy (let [cols (butlast (rest query))
+                         sub (last query)
+                         sub (preprocess-query sub relations)
+                         known-cols (::eutils/columns sub)
+                         cols (for [[o c] cols]
+                                [(resolve-column c known-cols)
+                                 ({:AscendingColumn '<
+                                   :DescendingColumn '>}
+                                  o)])]
+                     {:type :order-by
+                      :sub sub
+                      :orderings (into [] cols)})
+          :GroupBy (let [cols (butlast (rest query))
+                         [group-cols agg-cols] (split-with #(= :Column (first %)) cols)
+                         sub (last query)
+                         sub (preprocess-query sub relations)
+                         known-cols (::eutils/columns sub)
+                         group-cols (resolve-columns group-cols known-cols)
+                         agg (preprocess-aggregation agg-cols known-cols)]
+                     {:type :group-by
+                      :sub sub
+                      :group-columns group-cols
+                      :aggregation agg})
+          :Union (let [[_ lexp rexp] query
+                       lexp (preprocess-query lexp relations)
+                       lcols (::eutils/columns lexp)
+                       rexp (preprocess-query rexp relations)
+                       rcols (::eutils/columns rexp)]
+                   (if (= (set lcols) (set rcols))
+                     {:type :union
+                      :left lexp
+                      :right rexp}
                      (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
                                      {:type :incompatible-schema
                                       :left lcols
                                       :right rcols}))))
-      :NaturalJoin (let [[_ lexp rexp] query
-                         [lexp lcols] (preprocess-query lexp relations)
-                         l-groups (group-by name lcols)
-                         [rexp rcols] (preprocess-query rexp relations)
-                         r-groups (group-by name rcols)
-                         dropped-groups (for [[g1 cs1] l-groups
-                                              [g2 cs2] r-groups
-                                              :when (= g1 g2)]
-                                          (set cs2))
-                         cols (reduce set/difference
-                                      (into #{} (concat lcols rcols))
-                                      dropped-groups)]
-                     [[:natural-join lexp rexp]
-                      (vec cols)]))))
+          :Subtraction (let [[_ lexp rexp] query
+                             lexp (preprocess-query lexp relations)
+                             lcols (::eutils/columns lexp)
+                             rexp (preprocess-query rexp relations)
+                             rcols (::eutils/columns rexp)]
+                         (if (= (set lcols) (set rcols))
+                           {:type :subtraction
+                            :left lexp
+                            :right rexp}
+                           (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
+                                           {:type :incompatible-schema
+                                            :left lcols
+                                            :right rcols}))))
+          :Intersection (let [[_ lexp rexp] query
+                              lexp (preprocess-query lexp relations)
+                              lcols (::eutils/columns lexp)
+                              rexp (preprocess-query rexp relations)
+                              rcols (::eutils/columns rexp)]
+                          (if (= (set lcols) (set rcols))
+                            {:type :intersection
+                             :left lexp
+                             :right rexp}
+                            (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
+                                            {:type :incompatible-schema
+                                             :left lcols
+                                             :right rcols}))))
+          :Division (let [[_ lexp rexp] query
+                          lexp (preprocess-query lexp relations)
+                          lcols (::eutils/columns lexp)
+                          rexp (preprocess-query rexp relations)
+                          rcols (::eutils/columns rexp)
+                          group-cols (set/difference (set lcols) (set rcols))]
+                      (if (= (set/difference (set rcols) (set lcols)) #{})
+                        {:type :division
+                         :group-cols group-cols
+                         :left lexp
+                         :right rexp}
+                        (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
+                                        {:type :incompatible-schema
+                                         :left lcols
+                                         :right rcols}))))
+          :CrossProduct (let [[_ lexp rexp] query
+                              lexp (preprocess-query lexp relations)
+                              lcols (::eutils/columns lexp)
+                              rexp (preprocess-query rexp relations)
+                              rcols (::eutils/columns rexp)]
+                          (if (= (set/intersection (set lcols) (set rcols)) #{})
+                            {:type :cross-product
+                             :left lexp
+                             :right rexp}
+                            (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
+                                            {:type :incompatible-schema
+                                             :left lcols
+                                             :right rcols}))))
+          :InnerJoin (let [[_ lexp boolexp rexp] query
+                           lexp (preprocess-query lexp relations)
+                           lcols (::eutils/columns lexp)
+                           rexp (preprocess-query rexp relations)
+                           rcols (::eutils/columns rexp)
+                           known-cols (set/union (set lcols) (set rcols))
+                           rel (preprocess-predicate boolexp known-cols)]
+                       (if (= (set/intersection (set lcols) (set rcols)) #{})
+                         {:type :inner-join
+                          :left lexp
+                          :right rexp
+                          :relation rel}
+                         (throw (ex-info (str "Incompatible Schemas: " lcols " " rcols)
+                                         {:type :incompatible-schema
+                                          :left lcols
+                                          :right rcols}))))
+          :NaturalJoin (let [[_ lexp rexp] query
+                             lexp (preprocess-query lexp relations)
+                             lcols (::eutils/columns lexp)
+                             l-groups (group-by name lcols)
+                             rexp (preprocess-query rexp relations)
+                             rcols (::eutils/columns rexp)
+                             r-groups (group-by name rcols)
+                             dropped-groups (for [[g1 cs1] l-groups
+                                                  [g2 cs2] r-groups
+                                                  :when (= g1 g2)]
+                                              (set cs2))
+                             cols (reduce set/difference
+                                          (into #{} (concat lcols rcols))
+                                          dropped-groups)]
+                         {:type :natural-join
+                          :left lexp
+                          :right rexp})))
+      eutils/propogate-column-metadata))

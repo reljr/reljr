@@ -53,62 +53,45 @@
 (defn evaluate
   "Evaluates a relational algebra expression over any of the available relations."
   [expression relations]
-  (cond
-    (string? expression) (get relations expression)
-    (vector? expression)
-    (case (first expression)
-      :projection (let [[_ subexpr cols] expression
-                        subeval (evaluate subexpr relations)
-                        cols (map (fn [[c n]] [(predicate-runner c) n]) cols)]
-                    (table/project subeval cols))
-      :selection (let [[_ subexpr pred] expression
-                       subeval (evaluate subexpr relations)]
-                   (table/select subeval (predicate-runner pred)))
-      :rename-relation (let [[_ subexpr name] expression
-                             subeval (evaluate subexpr relations)]
-                         (table/rename subeval name))
-      :rename-column (let [[_ subexpr old new] expression
-                           subeval (evaluate subexpr relations)]
-                       (table/rename-column subeval old new))
-      :order-by (let [[_ subexpr cols] expression
-                      subeval (evaluate subexpr relations)]
-                  (table/order-records-by subeval cols))
-      :group-by (let [[_ subexpr group-cols agg] expression
-                      subeval (evaluate subexpr relations)
-                      agg (aggregation-runner agg)]
-                  (table/group-records-by subeval group-cols agg))
-      :union (let [[_ lexp rexp] expression
-                   lval (evaluate lexp relations)
-                   rval (evaluate rexp relations)]
-               (set/union lval rval))
-      :subtraction (let [[_ lexp rexp] expression
-                         lval (evaluate lexp relations)
-                         rval (evaluate rexp relations)]
-                     (set/difference lval rval))
-      :intersection (let [[_ lexp rexp] expression
-                          lval (evaluate lexp relations)
-                          rval (evaluate rexp relations)]
-                      (set/intersection lval rval))
-      :division (let [[_ group-cols lexp rexp] expression
-                      lval (evaluate lexp relations)
-                      rval (evaluate rexp relations)
-                      rcols (table/columns-of rval)]
-                  (table/project
-                   (table/select
-                    (table/group-records-by
-                     lval group-cols
-                     (fn [g] {'keep (= rval (table/project g rcols))}))
-                    #(% 'keep))
-                   group-cols))
-      :cross-product (let [[_ lexp rexp] expression
-                           lval (evaluate lexp relations)
-                           rval (evaluate rexp relations)]
-                       (table/cross-product lval rval))
-      :inner-join (let [[_ lexp rexp rel] expression
-                        lval (evaluate lexp relations)
-                        rval (evaluate rexp relations)]
-                    (table/inner-join lval rval (predicate-runner rel)))
-      :natural-join (let [[_ lexp rexp] expression
-                          lval (evaluate lexp relations)
-                          rval (evaluate rexp relations)]
-                      (table/natural-join lval rval)))))
+  (letfn [(postwalker [expression]
+            (case (:type expression)
+              :relation (get relations (:relation expression))
+              :projection (table/project (:sub expression)
+                                         (map (fn [[c n]]
+                                                [(predicate-runner c) n])
+                                              (:columns expression)))
+              :selection (table/select (:sub expression)
+                                       (predicate-runner (:predicate expression)))
+              :rename-relation (table/rename (:sub expression) (:name expression))
+              :rename-column (table/rename-column (:sub expression)
+                                                  (:old expression)
+                                                  (:new expression))
+              :order-by (table/order-records-by (:sub expression)
+                                                (map (fn [[c n]] [c ({'< #(< (compare %1 %2) 0)
+                                                                      '> #(> (compare %1 %2) 0)} n)])
+                                                     (:orderings expression)))
+              :group-by (table/group-records-by (:sub expression)
+                                                (:group-columns expression)
+                                                (aggregation-runner
+                                                 (:aggregation expression)))
+              :union (set/union (:left expression) (:right expression))
+              :subtraction (set/difference (:left expression) (:right expression))
+              :intersection (set/intersection (:left expression) (:right expression))
+              :division (let [{:keys [group-cols left right]} expression
+                              rcols (table/columns-of right)]
+                          (table/project
+                           (table/select
+                            (table/group-records-by
+                             left group-cols
+                             (fn [g] {'keep (= right (table/project g rcols))}))
+                            #(% 'keep))
+                           group-cols))
+              :cross-product (table/cross-product (:left expression)
+                                                  (:right expression))
+              :inner-join (table/inner-join (:left expression)
+                                            (:right expression)
+                                            (predicate-runner
+                                             (:relation expression)))
+              :natural-join (table/natural-join (:left expression)
+                                                (:right expression))))]
+    (eutils/raexpression-walker expression identity postwalker)))
