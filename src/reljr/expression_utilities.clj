@@ -98,7 +98,7 @@
                 :cross-product :inner-join :natural-join)
         (binary-recur expression)))))
 
-(defn pprint-raexpression [expression]
+(defn pprint-raexpression* [expression]
   (case (:type expression)
     :relation (pp/cl-format true "Relation: ~A~:@_" (:relation expression))
     (do
@@ -121,5 +121,9 @@
        (doseq [v (keep expression [:sub :left :right])
                :when v]
          (pp/cl-format true "- ")
-         (pprint-raexpression v)))
+         (pprint-raexpression* v)))
       (pp/cl-format true "~@:_"))))
+
+(defn pprint-raexpression [expression]
+  (pp/with-pprint-dispatch pprint-raexpression*
+    (pp/pprint expression)))
