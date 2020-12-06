@@ -6,9 +6,10 @@
 
 (def predicate-fns
   {'not not
-   'and #(and %1 %2)
-   'or #(or %1 %2)
+   'and (fn [& vs] (every? identity vs))
+   'or (fn [& vs] (some identity vs))
    '= =
+   'not= not=
    '> >
    '>= >=
    '< <
