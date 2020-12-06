@@ -1,0 +1,947 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #383a59;
+  color: #f2f2f2;
+  font-family: "Source Sans Pro";
+  font-weight: 300;
+}
+
+input.repl {
+  background-color: #252525;
+  color: #f2f2f2;
+  font-family: "Source Sans Pro";
+  font-weight: 300;
+  width: 90vw;
+}
+
+.theme {
+  width: 840px;
+  padding: 0 2rem;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Header
+   ========================================================================== */
+
+.title {
+  margin: 0;
+  font-size: 72px;
+  text-align: center;
+  font-family: "Abril Text";
+  font-weight: 700;
+  height: 100px;
+}
+
+.subtitle {
+  margin: 0 0 10px;
+  font-size: 28px;
+  font-weight: 400;
+  min-height: 36px;
+}
+
+.header {
+  padding: 140px 0 80px;
+  margin: 0 auto;
+  justify-content: center;
+  text-align: center;
+  flex-basis: 100%;
+  max-width: 100%;
+}
+
+.gh-buttons {
+  margin-top: 25px;
+  height: 33px;
+}
+
+.gh-buttons span {
+  margin: 0 5px;
+}
+
+/* Navigation
+   ========================================================================== */
+
+.topbar-title {
+  margin-left: 10px;
+  font-family: "Abril Text";
+  font-weight: 700;
+  display: inline-block;
+  color: #f2f2f2;
+  font-size: 24px;
+}
+
+.cyan .topbar-title:hover {
+  color: rgba(139, 233, 253, 1);
+}
+.green .topbar-title:hover {
+  color: rgba(80, 250, 123, 1);
+}
+.orange .topbar-title:hover {
+  color: rgba(255, 184, 108, 1);
+}
+.pink .topbar-title:hover {
+  color: rgba(255, 121, 198, 1);
+}
+.purple .topbar-title:hover {
+  color: rgba(189, 147, 249, 1);
+}
+
+nav {
+  padding-top: 2rem;
+}
+
+nav ul {
+  width: 100%;
+  list-style: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+nav ul li {
+  display: inline-block;
+}
+
+nav ul li a {
+  color: #f2f2f2;
+  font-size: 20px;
+  font-weight: 400;
+  border-bottom: 2px solid transparent;
+  margin-left: 20px;
+}
+
+.cyan nav ul li a:hover {
+  border-color: rgba(139, 233, 253, 1);
+  color: rgba(139, 233, 253, 1);
+}
+
+.green nav ul li a:hover {
+  border-color: rgba(80, 250, 123, 1);
+  color: rgba(80, 250, 123, 1);
+}
+
+.orange nav ul li a:hover {
+  border-color: rgba(255, 184, 108, 1);
+  color: rgba(255, 184, 108, 1);
+}
+
+.pink nav ul li a:hover {
+  border-color: rgba(255, 121, 198, 1);
+  color: rgba(255, 121, 198, 1);
+}
+
+.purple nav ul li a:hover {
+  border-color: rgba(189, 147, 249, 1);
+  color: rgba(189, 147, 249, 1);
+}
+
+/* Categories
+   ========================================================================== */
+
+.category-title {
+  margin: 0 0 40px;
+  font-size: 48px;
+  text-align: center;
+  font-family: "Abril Text";
+  font-weight: 700;
+}
+
+.category-title.orange {
+  color: #ffb86c;
+}
+.category-title.cyan {
+  color: #8be9fd;
+}
+.category-title.purple {
+  color: #bd93f9;
+}
+
+.category-title.tilt-right {
+  transform: rotate(10deg);
+}
+
+.category-title.tilt-left {
+  transform: rotate(-10deg);
+}
+
+/* App
+   ========================================================================== */
+
+.app {
+  margin-bottom: 80px;
+  text-decoration: none;
+}
+
+.app-title {
+  margin: 20px 0 0;
+  font-size: 36px;
+  color: #bcc2cd;
+  text-align: center;
+  font-family: "Abril Text";
+  font-weight: 700;
+  transition: color 0.3s linear;
+}
+
+.app:hover .orange {
+  color: #ffb86c;
+}
+.app:hover .pink {
+  color: #ff79c6;
+}
+.app:hover .cyan {
+  color: #8be9fd;
+}
+.app:hover .purple {
+  color: #bd93f9;
+}
+.app:hover .red {
+  color: #ff5555;
+}
+
+.app-img {
+  height: 205px;
+  display: block;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.app-img img {
+  display: flex;
+  align-self: flex-end;
+}
+
+.app-views {
+  color: #f2f2f2;
+  text-align: center;
+}
+
+/* Credits
+   ========================================================================== */
+
+.credits {
+  text-align: center;
+  font-size: 1.3em;
+  margin: 0;
+}
+
+.credits a {
+  text-decoration: none;
+  -webkit-transition: color 0.3s linear;
+  transition: color 0.3s linear;
+}
+
+.credits .cyan {
+  color: rgba(139, 233, 253, 1);
+}
+.credits .cyan:hover {
+  color: rgba(139, 233, 253, 0.7);
+}
+
+.credits .green {
+  color: rgba(80, 250, 123, 1);
+}
+.credits .green:hover {
+  color: rgba(80, 250, 123, 0.7);
+}
+
+.credits .orange {
+  color: rgba(255, 184, 108, 1);
+}
+.credits .orange:hover {
+  color: rgba(255, 184, 108, 0.7);
+}
+
+.credits .pink {
+  color: rgba(255, 121, 198, 1);
+}
+.credits .pink:hover {
+  color: rgba(255, 121, 198, 0.7);
+}
+
+.credits .love {
+  display: inline-block;
+  position: relative;
+  top: 0.2em;
+  font-size: 1.4em;
+  color: #ff79c6;
+  -webkit-transform: scale(0.9);
+  -moz-transform: scale(0.9);
+  transform: scale(0.9);
+  -webkit-animation: love 0.5s infinite linear alternate-reverse;
+  -moz-animation: love 0.5s infinite linear alternate-reverse;
+  animation: love 0.5s infinite linear alternate-reverse;
+}
+
+@-webkit-keyframes love {
+  to {
+    -webkit-transform: scale(1.1);
+  }
+}
+
+@-moz-keyframes love {
+  to {
+    -moz-transform: scale(1.1);
+  }
+}
+
+@keyframes love {
+  to {
+    transform: scale(1.1);
+  }
+}
+
+/* ==========================================================================
+   Instructions
+   ========================================================================== */
+
+h3 {
+  font-family: "Abril Text";
+  font-weight: 700;
+  text-align: left;
+  font-size: 3em;
+}
+
+h4 {
+  font-size: 2em;
+  font-weight: 300;
+  margin: 1em 0 0.3em;
+}
+
+code {
+  font-family: "Source Sans Pro";
+}
+
+pre {
+  background-color: #252525;
+  padding: 20px;
+  margin: 0 0 2em 0;
+  border-radius: 5px;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+pre.repl {
+  max-height: 80vh;
+  width: 90vw;
+  padding: 0px;
+  white-space: pre;
+  overflow-y: scroll;
+  display: flex;
+  flex-direction: column-reverse;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+pre.repl::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+pre.repl {
+  -ms-overflow-style: none; /* IE and Edge */
+  scrollbar-width: none; /* Firefox */
+}
+
+ol {
+  font-size: 1.1em;
+  font-weight: 300;
+  margin: 0 0 20px 30px;
+}
+
+p {
+  margin: 0 0 0.5em 0;
+}
+
+a {
+  -webkit-transition: all 0.3s linear;
+  transition: all 0.3s linear;
+  text-decoration: none;
+}
+
+/* Theme
+   ========================================================================== */
+
+.theme {
+  margin: 0 auto 80px;
+}
+
+.views {
+  float: right;
+  margin-top: 30px;
+  opacity: 1;
+  transition: 0.3s ease-in opacity;
+}
+
+.views.loading {
+  opacity: 0;
+}
+
+.instructions {
+  margin-bottom: 2em;
+}
+
+.instructions img {
+  border-radius: 10px;
+  display: block;
+  margin: 20px auto;
+  height: auto;
+  max-width: 100%;
+}
+
+.instructions ol li ul {
+  margin-left: 20px;
+  margin-bottom: 20px;
+}
+
+.orange .title,
+.orange .subtitle a,
+.orange .theme a,
+.orange .theme h3,
+.orange .theme code,
+.orange .form input[type="email"] {
+  color: rgba(255, 184, 108, 1);
+}
+
+.orange .subtitle a:hover,
+.orange .theme a:hover {
+  color: rgba(255, 184, 108, 0.7);
+}
+
+.orange .form input[type="submit"] {
+  background: rgba(255, 184, 108, 1);
+}
+
+.orange ::selection {
+  background: rgba(255, 184, 108, 1);
+  color: #000;
+}
+
+.pink .title,
+.pink .subtitle a,
+.pink .theme a,
+.pink .theme h3,
+.pink .theme code,
+.pink .form input[type="email"] {
+  color: rgba(255, 121, 198, 1);
+}
+
+.pink .subtitle a:hover,
+.pink .theme a:hover {
+  color: rgba(255, 121, 198, 0.7);
+}
+
+.pink .form input[type="submit"] {
+  background: rgba(255, 121, 198, 1);
+}
+
+.pink ::selection {
+  background: rgba(255, 121, 198, 1);
+  color: #000;
+}
+
+.cyan .title,
+.cyan .subtitle a,
+.cyan .theme a,
+.cyan .theme h3,
+.cyan .theme code,
+.cyan .form input[type="email"] {
+  color: rgba(139, 233, 253, 1);
+}
+
+.cyan .subtitle a:hover,
+.cyan .theme a:hover {
+  color: rgba(139, 233, 253, 0.7);
+}
+
+.cyan .form input[type="submit"] {
+  background: rgba(139, 233, 253, 1);
+}
+
+.cyan ::selection {
+  background: rgba(139, 233, 253, 1);
+  color: #000;
+}
+
+.purple .title,
+.purple .subtitle a,
+.purple .theme a,
+.purple .theme h3,
+.purple .theme code,
+.purple .form input[type="email"] {
+  color: rgba(189, 147, 249, 1);
+}
+
+.purple .subtitle a:hover,
+.purple .theme a:hover {
+  color: rgba(189, 147, 249, 0.7);
+}
+
+.purple .form input[type="submit"] {
+  background: rgba(189, 147, 249, 1);
+}
+
+.purple ::selection {
+  background: rgba(189, 147, 249, 1);
+  color: #000;
+}
+
+.pro-highlight {
+  color: #50fa7b;
+}
+
+.green .title,
+.green .subtitle a,
+.green .theme a,
+.green .theme h3,
+.green .theme code,
+.green .form input[type="email"] {
+  color: rgba(80, 250, 123, 1);
+}
+
+.green .subtitle a:hover,
+.green .theme a:hover {
+  color: rgba(80, 250, 123, 0.7);
+}
+
+.green .form input[type="submit"] {
+  background: rgba(80, 250, 123, 1);
+}
+
+.green ::selection {
+  background: rgba(80, 250, 123, 1);
+  color: #000;
+}
+
+.theme {
+  width: 840px;
+}
+
+@media (max-width: 840px) {
+  .theme {
+    width: auto;
+  }
+
+  .views {
+    float: none;
+    margin: 20px 0;
+  }
+}
+
+.preview {
+  border-radius: 10px;
+  display: block;
+  margin: -30px auto 20px;
+  height: auto;
+  max-width: 100%;
+}
+
+/* Updates
+   ========================================================================== */
+
+.form {
+  max-width: 400px;
+  margin-top: 1em;
+  margin-bottom: 0.5em;
+}
+
+.form:before,
+.form:after {
+  display: table;
+  line-height: 0;
+  content: "";
+}
+
+.form:after {
+  clear: both;
+}
+
+.form * {
+  margin: 0;
+  border: 0;
+  padding: 0;
+  outline: 0;
+  box-sizing: border-box !important;
+  float: left !important;
+}
+
+.form input[type="email"] {
+  border-radius: 4px;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  font-family: "Source Sans Pro";
+  font-size: 15px;
+  line-height: 20px;
+  background: #252525;
+  border-right: 0;
+  padding: 10px;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.02);
+  background-position: top right;
+  background-repeat: no-repeat;
+  text-rendering: optimizeLegibility;
+  font-smoothing: antialiased;
+  -webkit-appearance: none;
+  -moz-appearance: caret;
+  width: 65% !important;
+  height: 40px !important;
+}
+
+.form input[type="submit"] {
+  border-radius: 4px;
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.12);
+  -webkit-transition: all 0.05s ease-in-out;
+  transition: all 0.05s ease-in-out;
+  display: inline-block;
+  padding: 11px 15px 12px;
+  cursor: pointer;
+  color: #000;
+  font-size: 15px;
+  line-height: 100%;
+  font-family: "Source Sans Pro";
+  height: 40px !important;
+  width: 35% !important;
+}
+
+/* ==========================================================================
+   Single
+   ========================================================================== */
+
+.single .wrap {
+  background: #282a36;
+  padding: 80px 0;
+}
+
+.single .theme {
+  margin-bottom: 0;
+}
+
+.single h3 {
+  margin-bottom: 10px;
+}
+
+.single p {
+  font-size: 20px;
+  margin-bottom: 20px;
+}
+
+.cyan .single a {
+  border-bottom: 2px solid #8be9fd;
+}
+
+.pink .single a {
+  border-bottom: 2px solid #ff79c6;
+}
+
+.single figure {
+  margin-bottom: 20px;
+}
+
+.single figure a {
+  border: 0;
+}
+
+.single figure img {
+  border-radius: 10px;
+  border: 5px solid #8be9fd;
+  margin-top: 10px;
+  max-width: 100%;
+}
+
+.single figure figcaption {
+  font-style: italic;
+  text-align: center;
+}
+
+.single .highlight {
+  color: #8be9fd;
+}
+
+/* ==========================================================================
+   Book
+   ========================================================================== */
+
+.book-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  perspective: 600px;
+  margin: 30px auto 0;
+}
+
+@keyframes initAnimation {
+  0% {
+    transform: rotateY(0deg);
+  }
+  100% {
+    transform: rotateY(-30deg);
+  }
+}
+
+.book {
+  width: 250px;
+  height: 400px;
+  position: relative;
+  transform-style: preserve-3d;
+  transform: rotateY(-30deg);
+  transition: 1s ease;
+  animation: 1s ease 0s 1 initAnimation;
+}
+
+.book:hover {
+  transform: rotateY(0deg);
+}
+
+.book img:first-child {
+  position: absolute;
+  top: 0;
+  left: 0;
+  background-color: red;
+  width: 250px;
+  height: 400px;
+  transform: translateZ(25px);
+  background-color: #01060f;
+  border-radius: 0 2px 2px 0;
+  box-shadow: 5px 5px 20px #333;
+}
+
+.book::before {
+  position: absolute;
+  content: " ";
+  background-color: blue;
+  left: 0;
+  top: 3px;
+  width: 48px;
+  height: 396px;
+  transform: translateX(222px) rotateY(90deg);
+  background: linear-gradient(
+    90deg,
+    #fff 0%,
+    #f9f9f9 5%,
+    #fff 10%,
+    #f9f9f9 15%,
+    #fff 20%,
+    #f9f9f9 25%,
+    #fff 30%,
+    #f9f9f9 35%,
+    #fff 40%,
+    #f9f9f9 45%,
+    #fff 50%,
+    #f9f9f9 55%,
+    #fff 60%,
+    #f9f9f9 65%,
+    #fff 70%,
+    #f9f9f9 75%,
+    #fff 80%,
+    #f9f9f9 85%,
+    #fff 90%,
+    #f9f9f9 95%,
+    #fff 100%
+  );
+}
+
+.book::after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  content: " ";
+  width: 250px;
+  height: 400px;
+  transform: translateZ(-25px);
+  background-color: #01060f;
+  border-radius: 0 2px 2px 0;
+  box-shadow: -10px 0 50px 10px #333;
+}
+
+/* ==========================================================================
+   Microtip
+   ========================================================================== */
+
+[aria-label][role~="tooltip"] {
+  position: relative;
+}
+
+[aria-label][role~="tooltip"]::before,
+[aria-label][role~="tooltip"]::after {
+  transform: translate3d(0, 0, 0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.18s ease-in-out 0s;
+  position: absolute;
+  box-sizing: border-box;
+  z-index: 10;
+  transform-origin: top;
+}
+
+[aria-label][role~="tooltip"]::before {
+  background-size: 100% auto !important;
+  content: "";
+}
+
+[aria-label][role~="tooltip"]::after {
+  background: rgba(17, 17, 17, 0.9);
+  border-radius: 4px;
+  color: #ffffff;
+  content: attr(aria-label);
+  font-size: 14px;
+  font-weight: normal;
+  text-transform: none;
+  padding: 0.5em 1em;
+  white-space: nowrap;
+  box-sizing: content-box;
+}
+
+[aria-label][role~="tooltip"]:hover::before,
+[aria-label][role~="tooltip"]:hover::after,
+[aria-label][role~="tooltip"]:focus::before,
+[aria-label][role~="tooltip"]:focus::after {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* Top Position
+   ========================================================================== */
+
+[role~="tooltip"][data-microtip-position|="top"]::before {
+  background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236px%22%20height%3D%2212px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%280%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E")
+    no-repeat;
+  height: 6px;
+  width: 18px;
+  margin-bottom: 5px;
+}
+
+[role~="tooltip"][data-microtip-position|="top"]::after {
+  margin-bottom: 11px;
+}
+
+[role~="tooltip"][data-microtip-position|="top"]::before {
+  transform: translate3d(-50%, 0, 0);
+  bottom: 100%;
+  left: 50%;
+}
+
+[role~="tooltip"][data-microtip-position|="top"]:hover::before {
+  transform: translate3d(-50%, -5px, 0);
+}
+
+[role~="tooltip"][data-microtip-position|="top"]::after {
+  transform: translate3d(-50%, 0, 0);
+  bottom: 100%;
+  left: 50%;
+}
+
+[role~="tooltip"][data-microtip-position="top"]:hover::after {
+  transform: translate3d(-50%, -5px, 0);
+}
+
+/* Bottom Position
+   ========================================================================== */
+
+[role~="tooltip"][data-microtip-position|="bottom"]::before {
+  background: url("data:image/svg+xml;charset=utf-8,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%2236px%22%20height%3D%2212px%22%3E%3Cpath%20fill%3D%22rgba%2817,%2017,%2017,%200.9%29%22%20transform%3D%22rotate%28180%2018%206%29%22%20d%3D%22M2.658,0.000%20C-13.615,0.000%2050.938,0.000%2034.662,0.000%20C28.662,0.000%2023.035,12.002%2018.660,12.002%20C14.285,12.002%208.594,0.000%202.658,0.000%20Z%22/%3E%3C/svg%3E")
+    no-repeat;
+  height: 6px;
+  width: 18px;
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+
+[role~="tooltip"][data-microtip-position|="bottom"]::after {
+  margin-top: 11px;
+}
+
+[role~="tooltip"][data-microtip-position|="bottom"]::before {
+  transform: translate3d(-50%, -10px, 0);
+  bottom: auto;
+  left: 50%;
+  top: 100%;
+}
+
+[role~="tooltip"][data-microtip-position|="bottom"]:hover::before {
+  transform: translate3d(-50%, 0, 0);
+}
+
+[role~="tooltip"][data-microtip-position|="bottom"]::after {
+  transform: translate3d(-50%, -10px, 0);
+  top: 100%;
+  left: 50%;
+}
+
+[role~="tooltip"][data-microtip-position="bottom"]:hover::after {
+  transform: translate3d(-50%, 0, 0);
+}
+
+/* ==========================================================================
+   Fonts
+   ========================================================================== */
+
+@font-face {
+  font-family: "Abril Text";
+  src: url("/static/fonts/AbrilText-Bold.woff2") format("woff2"),
+    url("/static/fonts/AbrilText-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/fonts/SourceSansPro-Light.woff2") format("woff2"),
+    url("/static/fonts/SourceSansPro-Light.woff") format("woff");
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/fonts/SourceSansPro-Regular.woff2") format("woff2"),
+    url("/static/fonts/SourceSansPro-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Source Sans Pro";
+  src: url("/static/fonts/SourceSansPro-Bold.woff2") format("woff2"),
+    url("/static/fonts/SourceSansPro-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fira Code";
+  src: url("/static/fonts/FiraCode-Regular.woff2") format("woff2"),
+    url("/static/fonts/FiraCode-Regular.woff") format("woff");
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fira Code";
+  src: url("/static/fonts/FiraCode-Medium.woff2") format("woff2"),
+    url("/static/fonts/FiraCode-Medium.woff") format("woff");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Fira Code";
+  src: url("/static/fonts/FiraCode-Bold.woff2") format("woff2"),
+    url("/static/fonts/FiraCode-Bold.woff") format("woff");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}

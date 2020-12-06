@@ -15,7 +15,7 @@ before the NonTerminals.
 grammar sourced from the railroad diagrams at
 https://dbis-uibk.github.io/relax/help#relalg-syntax *)
 
-<S>                          = <whitespace> RAExpression <whitespace>
+<S>                          = <whitespace> Command <whitespace>
 
 
 (*
@@ -27,80 +27,65 @@ RAExpression precedence:
 -   Union, Subtraction
 *)
 
-<RAExpression>               = <lpar> RAExpression <rpar>              |
-                               relation_name                           |
-                               Projection                              |
-                               Selection                               |
-                               RenameRelation                          |
-                               RenameColumn                            |
-                               OrderBy                                 |
-                               GroupBy                                 |
-                               LowPrecedenceBinOp
+<Command>                    = ReadCommand       /
+                               StoreAsCommand    /
+                               RenameCommand     /
+                               DeleteCommand     /
+                               WriteCommand      /
+                               WriteAsCommand    /
+                               ListCommand       /
+                               QuitCommand       /
+                               PreprocessCommand /
+                               OptimizeCommand   /
+                               QueryCommand
+
+ReadCommand                  = <"read">
+StoreAsCommand               = <"store"> <whitespace> RAExpression <whitespace> <"as"> relation_name
+RenameCommand                = <"rename"> <whitespace> relation_name <whitespace> <"to"> <whitespace> relation_name
+DeleteCommand                = <"delete"> <whitespace> relation_name
+WriteCommand                 = <"write"> <whitespace> relation_name
+WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace> <"as"> <whitespace> filename
+ListCommand                  = <"list">
+QuitCommand                  = <"quit">
+PreprocessCommand            = <"preprocess"> RAExpression
+OptimizeCommand              = <"optimize"> RAExpression
+QueryCommand                 = RAExpression
+
+<RAExpression>               = LowPrecedenceBinOp
 
 <LowPrecedenceBinOp>         = Union | Subtraction | MidPrecedenceBinOp
 
 <MidPrecedenceBinOp>         = Intersection | HighPrecedenceBinOp
 
-<HighPrecedenceBinOp>        = CrossProduct | NaturalJoin |Division | RAExpression
+<HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin | Division | BinOpLeaf
+
+<BinOpLeaf>                  = relation_name              |
+                               <lpar> RAExpression <rpar> |
+                               Projection                 |
+                               Selection                  |
+                               RenameRelation             |
+                               RenameColumn               |
+                               OrderBy                    |
+                               GroupBy
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
-Projection                   = <projection_token> ColumnOrColumnComma RAExpression
+Projection                   = <projection_token> ProjectionBody BinOpLeaf
+
+<ProjectionColumn>           = Column / ExprColumn
+<ProjectionBody>             = ProjectionColumn                                     |
+                               ProjectionColumn <whitespace> <comma> ProjectionBody
 
 projection_token             = "π" | "pi" | "project" | <whitespace> <projection_token> <whitespace>
 
 
 
 
-Selection                    = <selection_token> BooleanExpression RAExpression
+Selection                    = <selection_token> ValueExpression BinOpLeaf
 
 selection_token              = "σ" | "sigma" | "select" | <whitespace> <selection_token> <whitespace>
-
-<BooleanExpression>          = <lpar> BooleanExpression <rpar>             |
-                               <whitespace> BooleanExpression <whitespace> |
-                               NotExpr                                     |
-                               AndExpr                                     |
-                               OrExpr                                      |
-                               EqualsExpr                                  |
-                               NotEqualsExpr                               |
-                               GreaterExpr                                 |
-                               GreaterEqualExpr                            |
-                               LessExpr                                    |
-                               LessEqualExpr
-
-NotExpr                      = not_token BooleanExpression
-
-not_token                    = "¬" | "not" | <whitespace> <not_token> <whitespace>
-
-AndExpr                      = BooleanExpression <and_token> BooleanExpression 
-
-and_token                    = "∧" | "&&" | "and" | <whitespace> <and_token> <whitespace> 
-
-OrExpr                       = BooleanExpression <or_token> BooleanExpression 
-
-or_token                     = "∨" | "||" | "or" | <whitespace> <or_token> <whitespace> 
-
-EqualsExpr                   = ColNumOrString <whitespace> <"="> <whitespace> ColNumOrString
-
-NotEqualsExpr                = ColNumOrString <ne_token> ColNumOrString
-
-ne_token                     = "!=" | "≠" | <whitespace> <ne_token> <whitespace> 
-
-<ColNumOrString>             = Column | number | string
-
-GreaterExpr                  = ColNumOrString <whitespace> <">"> <whitespace> ColNumOrString
-
-GreaterEqualExpr             = ColNumOrString <ge_token> ColNumOrString
-
-ge_token                     = ">=" | "≥" | <whitespace> <ge_token> <whitespace>
-
-LessExpr                     = ColNumOrString <whitespace> <"<"> <whitespace> ColNumOrString
-
-LessEqualExpr                = ColNumOrString <le_token> ColNumOrString
-
-le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace> 
 
 
 
@@ -108,36 +93,39 @@ le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespac
 
 rename_token                 = "ρ" | "rho" | "rename" | <whitespace> <rename_token> <whitespace>
 
-RenameRelation               = <rename_token> relation_name RAExpression
+RenameRelation               = <rename_token> relation_name BinOpLeaf
 
 
 
 
-RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RAExpression
+RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> BinOpLeaf
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
-<ColToColOrCTCComma>         = Column <right_arrow> column_token |
-                               Column <right_arrow> column_token <comma> ColToColOrCTCComma 
+<ColToColOrCTCComma>         = Column <right_arrow> name |
+                               Column <right_arrow> name <comma> ColToColOrCTCComma
 
 
 
 
-OrderBy                      = <order_by_token> ColumnOrColumnComma RAExpression |
-                               <order_by_token> DirectionalColumnOrDCComma RAExpression
+OrderBy                      = <order_by_token> DirectionalColumn BinOpLeaf
 
 order_by_token               = "τ" | "tau" | "order by" | <whitespace> <order_by_token> <whitespace>
 
-(* a column that is "directional" is one that is followed by asc[ending] or desc[ending] *)
-<DirectionalColumnOrDCComma> = Column <asc_or_desc> |
-                               Column <asc_or_desc> <comma> DirectionalColumnOrDCComma
+<DirectionalColumn>          = AscendingColumn | DescendingColumn | DirectionalColumn <comma> DirectionalColumn
 
-asc_or_desc                  = "asc" | "ASC" | "desc" | "DESC" | <whitespace> <asc_or_desc> <whitespace>
+AscendingColumn              = Column <asc> 
+
+asc                          = "asc" | "ASC" | <whitespace> <asc> <whitespace>
+
+DescendingColumn             = Column <desc>
+
+desc                         = "desc" | "DESC" | <whitespace> <desc> <whitespace>
 
 
 
 
-GroupBy                      = <group_by_token> Aggregate <whitespace> RAExpression |
-                               <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> RAExpression
+GroupBy                      = <group_by_token> Aggregate <whitespace> BinOpLeaf |
+                               <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> BinOpLeaf
 
 group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group_by_token> <whitespace>
 
@@ -151,23 +139,23 @@ group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group
 
 count_token                  = "COUNT" | "count"
 
-AggregateCountStar           = <count_token> <lpar> <star> <rpar> <right_arrow> column_token
+AggregateCountStar           = <count_token> <lpar> <star> <rpar> <right_arrow> name
 
-AggregateCount               = <count_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateCount               = <count_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
-AggregateMin                 = <min_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateMin                 = <min_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <min_token>                  = "MIN" | "min"
 
-AggregateMax                 = <max_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateMax                 = <max_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <max_token>                  = "MAX" | "max"
 
-AggregateSum                 = <sum_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateSum                 = <sum_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <sum_token>                  = "SUM" | "sum"
 
-AggregateAvg                 = <avg_token> <lpar> Column <rpar> <right_arrow> column_token
+AggregateAvg                 = <avg_token> <lpar> ValueExpression <rpar> <right_arrow> name
 
 <avg_token>                  = "AVG" | "avg"
 
@@ -175,28 +163,35 @@ AggregateAvg                 = <avg_token> <lpar> Column <rpar> <right_arrow> co
   ; binary operations ;
   ;;;;;;;;;;;;;;;;;;;;;*)
 
-CrossProduct                 = HighPrecedenceBinOp <cross_product_token> RAExpression
+CrossProduct                 = HighPrecedenceBinOp <cross_product_token> BinOpLeaf
 
 cross_product_token          = "*" | "cross join" | "×" | <whitespace> <cross_product_token> <whitespace>
 
 
 
 
-NaturalJoin                  = HighPrecedenceBinOp <natural_join_token> RAExpression
+InnerJoin                  = HighPrecedenceBinOp <inner_join_token> ValueExpression BinOpLeaf
 
-natural_join_token           = "⋈" | "natural join" | <whitespace> <natural_join_token> <whitespace>
-
-
+inner_join_token           = "⋈" | "⨝" | "join" | "inner join" | <whitespace> <inner_join_token> <whitespace>
 
 
-Division                     = HighPrecedenceBinOp <division_token> RAExpression
+
+
+NaturalJoin                  = HighPrecedenceBinOp <natural_join_token> BinOpLeaf
+
+natural_join_token           = "⋈" | "⨝" | "natural join" | <whitespace> <natural_join_token> <whitespace>
+
+
+
+
+Division                     = HighPrecedenceBinOp <division_token> BinOpLeaf
 
 division_token               = "÷" | "/" | <whitespace> <division_token> <whitespace>
 
 
 
 
-Intersection                 = MidPrecedenceBinOp <intersection_token> HighPrecedenceBinOp
+Intersection                 = MidPrecedenceBinOp <intersection_token> BinOpLeaf
 
 intersection_token           = "intersect" | "∩" | <whitespace> <intersection_token> <whitespace>
 
@@ -214,17 +209,101 @@ Subtraction                  = LowPrecedenceBinOp <subtraction_token> MidPrecede
 
 subtraction_token            = "except" | "-" | "\\" | <whitespace> <subtraction_token> <whitespace>
 
+(*;;;;;;;;;;;;;;;;;;;;;
+  ; Value Expressions ;
+  ;;;;;;;;;;;;;;;;;;;;;*)
+
+<ValueExpression>            = ValueExpression7
+
+<ValueExpression7>           = OrExpr                                                  |
+                               ValueExpression6
+<ValueExpression6>           = AndExpr                                                 |
+                               ValueExpression5
+<ValueExpression5>           = EqualsExpr                                              |
+                               NotEqualsExpr                                           |
+                               GreaterExpr                                             |
+                               GreaterEqualExpr                                        |
+                               LessExpr                                                |
+                               LessEqualExpr                                           |
+                               ValueExpression4
+<ValueExpression4>           = MinusExpr                                               |
+                               PlusExpr                                                |
+                               ValueExpression3
+<ValueExpression3>           = TimesExpr                                               |
+                               DivisionExpr                                            |
+                               ModExpr                                                 |
+                               ValueExpression2
+<ValueExpression2>           = NegationExpr                                            |
+                               ValueExpression1
+<ValueExpression1>           = NotExpr                                                 |
+                               ValueExpression0
+<ValueExpression0>           = <lpar> <whitespace> ValueExpression <whitespace> <rpar> |
+                               FunctionExpr                                            |
+                               ColNumOrString
+
+
+
+
+NotExpr                      = not_token ValueExpression1
+
+not_token                    = "¬" | "not" | <whitespace> <not_token> <whitespace>
+
+AndExpr                      = ValueExpression6 <and_token> ValueExpression5
+
+and_token                    = "∧" | "&&" | "and" | <whitespace> <and_token> <whitespace>
+
+OrExpr                       = ValueExpression7 <or_token> ValueExpression6
+
+or_token                     = "∨" | "||" | "or" | <whitespace> <or_token> <whitespace>
+
+EqualsExpr                   = ValueExpression5 <whitespace> <"="> <whitespace> ValueExpression4
+
+NotEqualsExpr                = ValueExpression5 <ne_token> ValueExpression4
+
+ne_token                     = "!=" | "≠" | <whitespace> <ne_token> <whitespace>
+
+GreaterExpr                  = ValueExpression5 <whitespace> <">"> <whitespace> ValueExpression4
+
+GreaterEqualExpr             = ValueExpression5 <ge_token> ValueExpression4
+
+ge_token                     = ">=" | "≥" | <whitespace> <ge_token> <whitespace>
+
+LessExpr                     = ValueExpression5 <whitespace> <"<"> <whitespace> ValueExpression4
+
+LessEqualExpr                = ValueExpression5 <le_token> ValueExpression4
+
+le_token                     = "<=" | "≤" | <whitespace> <le_token> <whitespace>
+
+<ColNumOrString>             = Column | number | string
+
+MinusExpr                    = ValueExpression4 <whitespace> <"-"> <whitespace> ValueExpression3
+
+PlusExpr                     = ValueExpression4 <whitespace> <"+"> <whitespace> ValueExpression3
+
+TimesExpr                    = ValueExpression3 <whitespace> <"*"> <whitespace> ValueExpression2
+
+DivisionExpr                 = ValueExpression3 <whitespace> <"/"> <whitespace> ValueExpression2
+
+ModExpr                      = ValueExpression3 <whitespace> <"%"> <whitespace> ValueExpression2
+
+NegationExpr                 = <"-"> ValueExpression2
+
+FunctionExpr                 = name <whitespace> <lpar> <whitespace> ValueExpression (<comma> ValueExpression)* <whitespace> <rpar>
+
+
 (*;;;;;;;;;;;;;;;;;;;;
   ; common terminals ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
 <ColumnOrColumnComma>        = Column | Column <comma> ColumnOrColumnComma
 
-Column                       = column_token | column_token <dot> relation_name
+ExprColumn                   = ValueExpression <right_arrow> name
+
+Column                       = name | name <dot> relation_name
 
 string                       = #"'[\w\s\-_]*'"
 
-<column_token>               = #"[\w_]*"
+<name>                       = #"[\w_]+"
 
 number                       = #"\d+"
 
@@ -234,7 +313,7 @@ number                       = #"\d+"
 
 <whitespace>                 = #"\s*"
 
-<relation_name>              = <whitespace> #"\w+" <whitespace>
+<relation_name>              = <whitespace> name <whitespace>
 
 <lpar>                       = <whitespace> "(" <whitespace>
 
@@ -245,3 +324,5 @@ number                       = #"\d+"
 <star>                       = <whitespace> "*" <whitespace>
 
 right_arrow                  = <whitespace> "->" <whitespace> | <whitespace> "→" <whitespace>
+
+<filename>                   = #"[\w]+([.]csv)?"
