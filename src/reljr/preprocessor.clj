@@ -20,7 +20,7 @@
     (if (nil? new-name)
       (keyword (namespace (first known-cols)) column)
       (let [column (resolve-column column known-cols)
-            new-column (keyword (namespace column) new-name)]
+            new-column (keyword (when (keyword? column) (namespace column)) new-name)]
         new-column))))
 
 (defn preprocess-predicate [boolexpr known-cols]
@@ -89,14 +89,15 @@
   (for [[label column new-name] agg]
     (if (nil? new-name)
       [(keyword (namespace (first cols)) column) ['count nil]]
-      (let [column (preprocess-predicate column cols)
-            new-column (keyword (namespace column) new-name)]
+      (let [column-expr (preprocess-predicate column cols)
+            new-column (keyword (when (keyword? column-expr) (namespace column-expr))
+                                new-name)]
         [new-column (case label
                       :AggregateCount ['count nil]
-                      :AggregateMin ['min column]
-                      :AggregateMax ['max column]
-                      :AggregateSum ['sum column]
-                      :AggregateAvg ['avg column])]))))
+                      :AggregateMin ['min column-expr]
+                      :AggregateMax ['max column-expr]
+                      :AggregateSum ['sum column-expr]
+                      :AggregateAvg ['avg column-expr])]))))
 
 (defn preprocess-query [query relations]
   (cond
