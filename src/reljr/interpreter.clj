@@ -1,7 +1,8 @@
 (ns reljr.interpreter
   (:require [reljr.table :as table]
             [clojure.set :as set]
-            [reljr.aggregates :as agg]))
+            [reljr.aggregates :as agg]
+            [reljr.expression-utilities :as eutils]))
 
 (def predicate-fns
   {'not not

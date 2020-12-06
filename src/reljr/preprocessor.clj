@@ -1,6 +1,7 @@
 (ns reljr.preprocessor
   (:require [reljr.table :as table]
             [reljr.aggregates :as agg]
+            [reljr.expression-utilities :as eutils]
             [clojure.set :as set]))
 
 (defn resolve-column [col known-cols]
