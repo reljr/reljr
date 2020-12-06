@@ -1,2 +1,2 @@
 (ns reljr.preprocessor-test
-  (:require  [clojure.test :as t]))
+  (:require  [cljs.test :refer-macros [deftest is testing run-tests]]))

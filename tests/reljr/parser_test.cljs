@@ -149,34 +149,33 @@
           [:EqualsExpr [:Column "color"] [:string "'red'"]]
           [:CrossProduct "Parts" "Catalog"]]]]])))
   (is
-   (=
-    (p/relational-algebra-parser " π Catalog.sid (σ num_red_parts=red_count (γ Catalog.sid, num_red_parts; count(Catalog.sid) -> red_count (π Catalog.sid, Catalog.pid, Parts.color, num_red_parts (σ Parts.color = 'red' and Catalog.pid = Parts.pid (Catalog × Parts * (gamma count(Parts.pid) -> num_red_parts  (σ Parts.color='red' (Parts)))))))) ")
-    '([:Projection
-       [:Column "Catalog" "sid"]
-       [:Selection
-        [:EqualsExpr [:Column "num_red_parts"] [:Column "red_count"]]
-        [:GroupBy
+   (= (p/full-relational-algebra-parser " π Catalog.sid (σ num_red_parts=red_count (γ Catalog.sid, num_red_parts; count(Catalog.sid) -> red_count (π Catalog.sid, Catalog.pid, Parts.color, num_red_parts (σ Parts.color = 'red' and Catalog.pid = Parts.pid (Catalog × Parts * (gamma count(Parts.pid) -> num_red_parts  (σ Parts.color='red' (Parts)))))))) ")
+      '([:Projection
          [:Column "Catalog" "sid"]
-         [:Column "num_red_parts"]
-         [:AggregateCount [:Column "Catalog" "sid"] "red_count"]
-         [:Projection
-          [:Column "Catalog" "sid"]
-          [:Column "Catalog" "pid"]
-          [:Column "Parts" "color"]
-          [:Column "num_red_parts"]
-          [:Selection
-           [:AndExpr
-            [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
-            [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]]
-           [:CrossProduct
-            "Catalog"
-            [:CrossProduct
-             "Parts"
-             [:GroupBy
-              [:AggregateCount [:Column "Parts" "pid"] "num_red_parts"]
-              [:Selection
-               [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
-               "Parts"]]]]]]]]])))
+         [:Selection
+          [:EqualsExpr [:Column "num_red_parts"] [:Column "red_count"]]
+          [:GroupBy
+           [:Column "Catalog" "sid"]
+           [:Column "num_red_parts"]
+           [:AggregateCount [:Column "Catalog" "sid"] "red_count"]
+           [:Projection
+            [:Column "Catalog" "sid"]
+            [:Column "Catalog" "pid"]
+            [:Column "Parts" "color"]
+            [:Column "num_red_parts"]
+            [:Selection
+             [:AndExpr
+              [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
+              [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]]
+             [:CrossProduct
+              "Catalog"
+              [:CrossProduct
+               "Parts"
+               [:GroupBy
+                [:AggregateCount [:Column "Parts" "pid"] "num_red_parts"]
+                [:Selection
+                 [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
+                 "Parts"]]]]]]]]])))
   (is
    (= (p/relational-algebra-parser " π Employees.ename ((σ planecount ≥ 2 (γ Employees.ename ; count(Certified.aid) -> planecount (σ Aircraft.cruisingrange > 1000 (Certified natural join Employees ⋈ Aircraft)))) natural join σ Aircraft.aname='Boeing' (Certified natural join Aircraft ⋈ Employees)) ")
       '([:Projection
