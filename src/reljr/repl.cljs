@@ -44,11 +44,6 @@
                                            tables)))
                             (catch js/Error e
                               (reset! fstate/main-result (ex-message e))))
-          :RenameCommand (reset! fstate/all-tables
-                                 (dissoc (assoc tables
-                                                (nth input 2)
-                                                (get tables (nth input 1)))
-                                         (nth input 1)))
           :DeleteCommand (reset! fstate/all-tables (dissoc tables (nth input 1)))
           :WriteCommand (file/download-blob (str (nth input 1) ".csv") (get tables (nth input 1)))
 

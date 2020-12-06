@@ -41,7 +41,6 @@ RAExpression precedence:
 
 ReadCommand                  = <"read">
 StoreAsCommand               = <"store"> <whitespace> RAExpression <whitespace> <"as"> relation_name
-RenameCommand                = <"rename"> <whitespace> relation_name <whitespace> <"to"> <whitespace> relation_name
 DeleteCommand                = <"delete"> <whitespace> relation_name
 WriteCommand                 = <"write"> <whitespace> relation_name
 WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace> <"as"> <whitespace> filename
@@ -301,7 +300,7 @@ ExprColumn                   = ValueExpression <right_arrow> name
 
 Column                       = name | name <dot> relation_name
 
-string                       = #"'[\w\s\-_]*'"
+string                       = <"'"> #"[\w\s\-_]*" <"'">
 
 <name>                       = #"[\w_]+"
 
