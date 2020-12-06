@@ -17,3 +17,5 @@ pom.xml.asc
 .auctex-auto/*
 _minted-report/*
 _minted-README/*
+public/js/*
+node_modules/*
