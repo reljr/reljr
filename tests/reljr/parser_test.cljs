@@ -88,26 +88,22 @@
             "Customer"]))))
 
 (deftest RACrossProduct (is (= (p/relational-algebra-parser "pi a B * pi c D")
-                               '([:Projection
-                                  [:Column "a"]
-                                  [:CrossProduct "B" [:Projection [:Column "c"] "D"]]]))))
+                               '([:CrossProduct
+                                  [:Projection [:Column "a"] "B"]
+                                  [:Projection [:Column "c"] "D"]]))))
 
 (deftest RAInnerJoin (is (= (p/relational-algebra-parser "ρ a ( Customer )⋈ a.name < b.name ( ρ b ( Customer ) )")
-                            '([:RenameRelation
-                               "a"
-                               [:InnerJoin
-                                "Customer"
-                                [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
-                                [:RenameRelation "b" "Customer"]]]))))
+                            '([:InnerJoin
+                               [:RenameRelation "a" "Customer"]
+                               [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
+                               [:RenameRelation "b" "Customer"]]))))
 
 (deftest RANaturalJoin (is (= (p/relational-algebra-parser "ρ a ( Customer )⋈ sigma a.name < b.name ( ρ b ( Customer ) )")
-                              '([:RenameRelation
-                                 "a"
-                                 [:NaturalJoin
-                                  "Customer"
-                                  [:Selection
-                                   [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
-                                   [:RenameRelation "b" "Customer"]]]]))))
+                              '([:NaturalJoin
+                                 [:RenameRelation "a" "Customer"]
+                                 [:Selection
+                                  [:LessExpr [:Column "a" "name"] [:Column "b" "name"]]
+                                  [:RenameRelation "b" "Customer"]]]))))
 
 (deftest RADivision
   (is
@@ -150,27 +146,26 @@
           [:CrossProduct "Parts" "Catalog"]]]]])))
   (is
    (= (p/full-relational-algebra-parser " π Catalog.sid (σ num_red_parts=red_count (γ Catalog.sid, num_red_parts; count(Catalog.sid) -> red_count (π Catalog.sid, Catalog.pid, Parts.color, num_red_parts (σ Parts.color = 'red' and Catalog.pid = Parts.pid (Catalog × Parts * (gamma count(Parts.pid) -> num_red_parts  (σ Parts.color='red' (Parts)))))))) ")
-      '([:Projection
-         [:Column "Catalog" "sid"]
-         [:Selection
-          [:EqualsExpr [:Column "num_red_parts"] [:Column "red_count"]]
-          [:GroupBy
-           [:Column "Catalog" "sid"]
-           [:Column "num_red_parts"]
-           [:AggregateCount [:Column "Catalog" "sid"] "red_count"]
-           [:Projection
+      '([:QueryCommand
+         [:Projection
+          [:Column "Catalog" "sid"]
+          [:Selection
+           [:EqualsExpr [:Column "num_red_parts"] [:Column "red_count"]]
+           [:GroupBy
             [:Column "Catalog" "sid"]
-            [:Column "Catalog" "pid"]
-            [:Column "Parts" "color"]
             [:Column "num_red_parts"]
-            [:Selection
-             [:AndExpr
-              [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
-              [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]]
-             [:CrossProduct
-              "Catalog"
+            [:AggregateCount [:Column "Catalog" "sid"] "red_count"]
+            [:Projection
+             [:Column "Catalog" "sid"]
+             [:Column "Catalog" "pid"]
+             [:Column "Parts" "color"]
+             [:Column "num_red_parts"]
+             [:Selection
+              [:AndExpr
+               [:EqualsExpr [:Column "Parts" "color"] [:string "'red'"]]
+               [:EqualsExpr [:Column "Catalog" "pid"] [:Column "Parts" "pid"]]]
               [:CrossProduct
-               "Parts"
+               [:CrossProduct "Catalog" "Parts"]
                [:GroupBy
                 [:AggregateCount [:Column "Parts" "pid"] "num_red_parts"]
                 [:Selection
@@ -188,10 +183,10 @@
             [:AggregateCount [:Column "Certified" "aid"] "planecount"]
             [:Selection
              [:GreaterExpr [:Column "Aircraft" "cruisingrange"] [:number "1000"]]
-             [:NaturalJoin "Certified" [:NaturalJoin "Employees" "Aircraft"]]]]]
+             [:NaturalJoin [:NaturalJoin "Certified" "Employees"] "Aircraft"]]]]
           [:Selection
            [:EqualsExpr [:Column "Aircraft" "aname"] [:string "'Boeing'"]]
-           [:NaturalJoin "Certified" [:NaturalJoin "Aircraft" "Employees"]]]]])))
+           [:NaturalJoin [:NaturalJoin "Certified" "Aircraft"] "Employees"]]]])))
 
   (is (= (p/relational-algebra-parser " pi Employees.ename, Employees.salary (sigma Employees.salary >= pilotavgsalary (((pi Employees.eid (pi Employees.eid (Employees)) - (pi Certified.eid (Certified))) cross join pi Employees.salary Employees) natural join Employees natural join gamma avg(Employees.salary) -> pilotavgsalary (Certified natural join Employees))) ")
          '([:Projection
@@ -202,18 +197,18 @@
               [:Column "Employees" "salary"]
               [:Column "pilotavgsalary"]]
              [:NaturalJoin
-              [:CrossProduct
-               [:Projection
-                [:Column "Employees" "eid"]
-                [:Subtraction
-                 [:Projection [:Column "Employees" "eid"] "Employees"]
-                 [:Projection [:Column "Certified" "eid"] "Certified"]]]
-               [:Projection [:Column "Employees" "salary"] "Employees"]]
               [:NaturalJoin
-               "Employees"
-               [:GroupBy
-                [:AggregateAvg [:Column "Employees" "salary"] "pilotavgsalary"]
-                [:NaturalJoin "Certified" "Employees"]]]]]])))
+               [:CrossProduct
+                [:Subtraction
+                 [:Projection
+                  [:Column "Employees" "eid"]
+                  [:Projection [:Column "Employees" "eid"] "Employees"]]
+                 [:Projection [:Column "Certified" "eid"] "Certified"]]
+                [:Projection [:Column "Employees" "salary"] "Employees"]]
+               "Employees"]
+              [:GroupBy
+               [:AggregateAvg [:Column "Employees" "salary"] "pilotavgsalary"]
+               [:NaturalJoin "Certified" "Employees"]]]]])))
   (is (= (p/relational-algebra-parser
           " pi Catalog.pid (sigma smax=scount ((gamma count(sid)-> smax (Suppliers)) * (gamma Catalog.pid; count(Catalog.sid) -> scount (pi Catalog.sid, Catalog.pid (Suppliers * (sigma Catalog.pid = Parts.pid && Catalog.cost < 200 (Catalog * Parts)))))))")
          '([:Projection
