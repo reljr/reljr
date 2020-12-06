@@ -39,7 +39,7 @@
     (t/is (= (evaluate (parse "rho S.x -> y Foo") table-foo)
              #{{:R/x 5, :R/y 6, :S/y 6.3} {:R/x 3, :R/y 2, :S/y 9.4}})))
   (t/testing "rename relation"
-    (t/is (= (evaluate (parse "rho Baz Foo") table-foo)
+    (t/is (= (evaluate (parse "rho Baz pi S.x, R.y Foo") table-foo)
              #{#:Baz{:x 6.3, :y 6} #:Baz{:x 9.4, :y 2}})))
   (t/testing "selection"
     (t/is (= (evaluate (parse "sigma R.x > 4 Foo") table-foo)
