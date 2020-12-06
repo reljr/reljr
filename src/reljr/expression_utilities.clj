@@ -46,3 +46,31 @@
     (keyword? e) #{e}
     (vector? e) (reduce set/union (map boolexpr-columns-used (rest e)))
     :otherwise #{}))
+
+(defn propogate-column-metadata [expression]
+  (->>
+   (case (:type expression)
+     :relation (::columns expression) ; Assume the preprocessor already set this
+     (:selection :order-by) (::columns (:sub expression))
+     :projection (into [] (map second) (:columns expression))
+     :rename-relation (mapv #(keyword (:name expression) (name %)) (::columns (:sub expression)))
+     :rename-column (mapv #(if (= %1 (:old expression)) (:new expression) %1) (::columns (:sub expression)))
+     :group-by (into (:group-cols expression) (map first (:aggregation expression)))
+     (:union :subtraction :intersection) (::columns (:left expression))
+     :division (let [{:keys [left right]} expression]
+                 (vec (set/difference (set left) (set right))))
+     (:inner-join :cross-product) (into (::columns (:left expression)) (::columns (:right expression)))
+     :natural-join
+     (let [lcols (::columns (:left expression))
+           l-groups (group-by name lcols)
+           rcols (::columns (:right expression))
+           r-groups (group-by name rcols)
+           dropped-groups (for [[g1 cs1] l-groups
+                                [g2 cs2] r-groups
+                                :when (= g1 g2)]
+                            (set cs2))
+           cols (reduce set/difference
+                        (into #{} (concat lcols rcols))
+                        dropped-groups)]
+       (vec cols)))
+   (assoc expression ::columns)))
