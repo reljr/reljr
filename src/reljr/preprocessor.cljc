@@ -1,7 +1,8 @@
 (ns reljr.preprocessor
   (:require [reljr.table :as table]
             [reljr.aggregates :as agg]
-            [clojure.set :as set]))
+            [clojure.set :as set]
+            [cljs.reader :as s]))
 
 (defn resolve-column [col known-cols]
   (if (= (count col) 3)
@@ -26,7 +27,7 @@
 (defn preprocess-predicate [boolexpr known-cols]
   (case (first boolexpr)
     :Column (resolve-column boolexpr known-cols)
-    :number (read-string (second boolexpr))
+    :number (s/read-string (second boolexpr))
     :NotExpr (let [[_ exp] boolexpr
                    pred (preprocess-predicate exp known-cols)]
                ['not pred])
