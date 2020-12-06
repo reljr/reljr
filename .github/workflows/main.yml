@@ -40,6 +40,6 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_USER_PASSWORD }}
           rm: true
-          source: "public/index.html,public/css/main.ccs,public/js/main.js"
+          source: "public/index.html,public/css/main.css,public/js/main.js"
           strip_components: 1
           target: "${{ secrets.REMOTE_DIR }}"
