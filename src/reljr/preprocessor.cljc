@@ -25,12 +25,12 @@
             new-column (keyword (when (keyword? column) (namespace column)) new-name)]
         new-column))))
 
-(defn preprocess-predicate [boolexpr known-cols]
-  (case (first boolexpr)
-    :Column (resolve-column boolexpr known-cols)
-    :number (s/read-string (second boolexpr))
+(defn preprocess-predicate [boolexp known-cols]
+  (case (first boolexp)
+    :Column (resolve-column boolexp known-cols)
+    :number (s/read-string (second boolexp))
     :string (second boolexp)
-    :NotExpr (let [[_ exp] boolexpr
+    :NotExpr (let [[_ exp] boolexp
                    pred (preprocess-predicate exp known-cols)]
                ['not pred])
     :AndExpr (let [[_ lexp rexp] boolexp
@@ -285,4 +285,3 @@
                           :left lexp
                           :right rexp})))
       eutils/propogate-column-metadata))
-
