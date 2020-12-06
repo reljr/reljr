@@ -18,7 +18,6 @@ pom.xml.asc
 _minted-report/*
 _minted-README/*
 public/js/*
-public/*
 node_modules/*
 resources/public/*
 .shadow-cljs/*
