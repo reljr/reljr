@@ -41,7 +41,6 @@ RAExpression precedence:
 
 ReadCommand                  = <"read">
 StoreAsCommand               = <"store"> <whitespace> RAExpression <whitespace> <"as"> relation_name
-RenameCommand                = <"rename"> <whitespace> relation_name <whitespace> <"to"> <whitespace> relation_name
 DeleteCommand                = <"delete"> <whitespace> relation_name
 WriteCommand                 = <"write"> <whitespace> relation_name
 WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace> <"as"> <whitespace> filename
