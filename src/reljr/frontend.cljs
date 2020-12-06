@@ -37,8 +37,7 @@
     [:p @fstate/repl-result]
     [:p @fstate/file-data]]
 
-   [:input.repl {:style {:width "90%"}
-                 :placeholder "reljr> "
+   [:input.repl {:placeholder "reljr> "
                  :id "repl-input"
                  :onKeyDown #(let [key (.-key %)]
                                (case key

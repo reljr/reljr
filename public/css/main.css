@@ -15,6 +15,7 @@ input.repl {
   color: #f2f2f2;
   font-family: "Source Sans Pro";
   font-weight: 300;
+  width: 90vw;
 }
 
 .theme {
@@ -326,8 +327,9 @@ pre {
 }
 
 pre.repl {
-  max-height: 1000px;
-  width: 90%;
+  max-height: 80vh;
+  width: 90vw;
+  padding: 0px;
   white-space: pre;
   overflow-y: scroll;
   display: flex;
