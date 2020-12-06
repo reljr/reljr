@@ -27,7 +27,7 @@
   [predicate]
   (cond
     (keyword? predicate) (fn [& colls] (some predicate colls))
-    (number? predicate) (fn [& _] predicate)
+    (or (string? predicate) (number? predicate)) (fn [& _] predicate)
     (vector? predicate)
     (let [[func & args] predicate
           func (predicate-fns func)

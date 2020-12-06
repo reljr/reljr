@@ -28,6 +28,7 @@
   (case (first boolexp)
     :Column (resolve-column boolexp known-cols)
     :number (read-string (second boolexp))
+    :string (second boolexp)
     :NotExpr (let [[_ exp] boolexp
                    pred (preprocess-predicate exp known-cols)]
                ['not pred])
@@ -43,6 +44,10 @@
                       lpred (preprocess-predicate lexp known-cols)
                       rpred (preprocess-predicate rexp known-cols)]
                   ['= lpred rpred])
+    :NotEqualsExpr (let [[_ lexp rexp] boolexp
+                         lpred (preprocess-predicate lexp known-cols)
+                         rpred (preprocess-predicate rexp known-cols)]
+                     ['not= lpred rpred])
     :GreaterExpr (let [[_ lexp rexp] boolexp
                        lpred (preprocess-predicate lexp known-cols)
                        rpred (preprocess-predicate rexp known-cols)]
@@ -81,7 +86,7 @@
                ['<= lpred rpred])
     :NegationExpr (let [[_ exp] boolexp
                         pred (preprocess-predicate exp known-cols)]
-                    ['not pred])
+                    ['- pred])
     :FunctionExpr (let [[_ name & args] boolexp
                         args (map #(preprocess-predicate % known-cols) args)]
                     (apply vector name args))))
