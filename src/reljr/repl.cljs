@@ -1,12 +1,11 @@
 (ns reljr.repl
-  (:require [clojure.pprint :as pp]
-            [clojure.string :as str]
-            [instaparse.core :as insta]
-            [reljr.file-handler :as files]
-            [reljr.parser :as parser]
+  (:require [instaparse.core :as insta]
+            [reljr.file-handler :as file]
+            [reljr.frontend-state :as fstate]
             [reljr.interpreter :as interp]
-            [reljr.preprocessor :as rpp])
-  (:gen-class))
+            [reljr.parser :as parser]
+            [reljr.preprocessor :as rpp]
+            [cljs.pprint :as pp]))
 
 (defn print-tables [tables]
   (let [preformatted-tables
@@ -19,54 +18,52 @@
                          (name col)))))])]
     (pp/cl-format true "~:{~&~A => ~<(~;~@{~A~^, ~:_~}~;)~:>~%~}" preformatted-tables)))
 
-(defn -main []
-  (binding [pp/*print-right-margin* 80
-            *out* (pp/get-pretty-writer *out*)]
-    (loop [tables {}]
-      (pp/cl-format true "~&reljr> ")
-      (flush)
-      (let [input (parser/full-relational-algebra-parser (read-line))]
-        (if (insta/failure? input)
-          (do (pp/cl-format true "~&~A~%" input)
-              (recur tables))
-          (let [input (first input)]
-            (case (first input)
-              :ReadCommand (recur (merge tables (files/get-table-data (second input))))
-              :ReadAsCommand (recur (merge tables (files/get-table-data (nth input 1)
-                                                                        (nth input 2))))
-              :StoreAsCommand (recur (try
-                                       (assoc tables
-                                              (nth input 2)
-                                              (interp/evaluate
-                                               (first (rpp/preprocess-query (nth input 1)
-                                                                            tables))
-                                               tables))
-                                       (catch Exception e
-                                         (print (ex-message e))
-                                         tables)))
-              :RenameCommand (recur (dissoc (assoc tables
-                                                   (nth input 2)
-                                                   (get tables (nth input 1)))
-                                            (nth input 1)))
-              :DeleteCommand (recur (dissoc tables (nth input 1)))
-              :WriteCommand (do (files/write-table-data (get tables (nth input 1))
-                                                        (str (nth input 1) ".csv"))
-                                (recur tables))
-              :WriteAsCommand (do (files/write-table-data (get tables (nth input 1))
-                                                          (nth input 2))
-                                  (recur tables))
-              :ListCommand (do (print-tables tables)
-                               (recur tables))
-              :QuitCommand ()
-              :PreprocessCommand (do (try
-                                       (print (rpp/preprocess-query (nth input 1) tables))
-                                       (catch Exception e
-                                         (print (ex-message e))))
-                                     (recur tables))
-              :QueryCommand (do (try
-                                  (pp/print-table (interp/evaluate
-                                                   (first (rpp/preprocess-query (nth input 1) tables))
-                                                   tables))
-                                  (catch Exception e
-                                    (print (ex-message e))))
-                                (recur tables)))))))))
+(defn web-main []
+  (let [input (parser/full-relational-algebra-parser @fstate/current-line)]
+    (if (insta/failure? input)
+      (reset! fstate/main-result
+              (with-out-str (pp/cl-format true "~&~A~%" input)))
+      (let [input (first input)
+            tables @fstate/all-tables]
+        (case (first input)
+          :ReadCommand (file/csv-dialog)
+          :ReadAsCommand (;;TODO
+                          )
+          :StoreAsCommand (try
+                            (swap! fstate/all-tables merge
+                                   (assoc tables
+                                          (nth input 2)
+                                          (interp/evaluate
+                                           (first (rpp/preprocess-query (nth input 1)
+                                                                        tables))
+                                           tables)))
+                            (catch js/Error e
+                              (reset! fstate/main-result (ex-message e))))
+          :RenameCommand (reset! fstate/all-tables
+                                 (dissoc (assoc tables
+                                                (nth input 2)
+                                                (get tables (nth input 1)))
+                                         (nth input 1)))
+          :DeleteCommand (reset! fstate/all-tables (dissoc tables (nth input 1)))
+          :WriteCommand (file/download-blob (str (nth input 1) ".csv") (get tables (nth input 1)))
+
+          :WriteAsCommand (file/download-blob (str (nth input 2) ".csv") (get tables (nth input 1)))
+          :ListCommand (reset! fstate/main-result
+                               (with-out-str (print-tables tables)))
+          :QuitCommand (;;TODO
+                        )
+          :PreprocessCommand (reset! fstate/main-result
+                                     (with-out-str
+                                       (try
+                                         (print (rpp/preprocess-query (nth input 1) tables))
+                                         (catch js/Error e
+                                           (println (str (ex-message e)))))))
+          :QueryCommand (reset! fstate/main-result
+                                (with-out-str
+                                  (try
+                                    (pp/print-table
+                                     (interp/evaluate
+                                      (first (rpp/preprocess-query (nth input 1) tables))
+                                      tables))
+                                    (catch js/Error e
+                                      (println (str (ex-message e))))))))))))
