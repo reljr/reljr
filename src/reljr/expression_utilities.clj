@@ -74,3 +74,26 @@
                         dropped-groups)]
        (vec cols)))
    (assoc expression ::columns)))
+
+(defn raexpression-walker [expression prefn postfn]
+  (let [expression (prefn expression)]
+    (letfn [(recursor [expression]
+              (raexpression-walker expression prefn postfn))
+            (unary-recur [expression]
+              (postfn (update expression :sub recursor)))
+            (binary-recur [expression]
+              (let [c (count expression)]
+                (-> expression
+                    transient
+                    (assoc! :left (recursor (:left expression)))
+                    (assoc! :right (recursor (:right expression)))
+                    persistent!
+                    postfn)))]
+      (case (:type expression)
+        :relation (postfn (prefn expression))
+        (:projection :selection :rename-relation
+                     :rename-column :order-by :group-by)
+        (unary-recur expression)
+        (:union :subtraction :intersection :division
+                :cross-product :inner-join :natural-join)
+        (binary-recur expression)))))
