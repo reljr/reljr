@@ -24,65 +24,65 @@
             new-column (keyword (when (keyword? column) (namespace column)) new-name)]
         new-column))))
 
-(defn preprocess-predicate [boolexpr known-cols]
-  (case (first boolexpr)
-    :Column (resolve-column boolexpr known-cols)
-    :number (read-string (second boolexpr))
-    :NotExpr (let [[_ exp] boolexpr
+(defn preprocess-predicate [boolexp known-cols]
+  (case (first boolexp)
+    :Column (resolve-column boolexp known-cols)
+    :number (read-string (second boolexp))
+    :NotExpr (let [[_ exp] boolexp
                    pred (preprocess-predicate exp known-cols)]
                ['not pred])
-    :AndExpr (let [[_ lexp rexp] boolexpr
+    :AndExpr (let [[_ lexp rexp] boolexp
                    lpred (preprocess-predicate lexp known-cols)
                    rpred (preprocess-predicate rexp known-cols)]
                ['and lpred rpred])
-    :OrExpr (let [[_ lexp rexp] boolexpr
+    :OrExpr (let [[_ lexp rexp] boolexp
                   lpred (preprocess-predicate lexp known-cols)
                   rpred (preprocess-predicate rexp known-cols)]
               ['or lpred rpred])
-    :EqualsExpr (let [[_ lexp rexp] boolexpr
+    :EqualsExpr (let [[_ lexp rexp] boolexp
                       lpred (preprocess-predicate lexp known-cols)
                       rpred (preprocess-predicate rexp known-cols)]
                   ['= lpred rpred])
-    :GreaterExpr (let [[_ lexp rexp] boolexpr
+    :GreaterExpr (let [[_ lexp rexp] boolexp
                        lpred (preprocess-predicate lexp known-cols)
                        rpred (preprocess-predicate rexp known-cols)]
                    ['> lpred rpred])
-    :GreaterEqualExpr (let [[_ lexp rexp] boolexpr
+    :GreaterEqualExpr (let [[_ lexp rexp] boolexp
                             lpred (preprocess-predicate lexp known-cols)
                             rpred (preprocess-predicate rexp known-cols)]
                         ['>= lpred rpred])
-    :LessExpr (let [[_ lexp rexp] boolexpr
+    :LessExpr (let [[_ lexp rexp] boolexp
                     lpred (preprocess-predicate lexp known-cols)
                     rpred (preprocess-predicate rexp known-cols)]
                 ['< lpred rpred])
-    :LessEqualExpr (let [[_ lexp rexp] boolexpr
+    :LessEqualExpr (let [[_ lexp rexp] boolexp
                          lpred (preprocess-predicate lexp known-cols)
                          rpred (preprocess-predicate rexp known-cols)]
                      ['<= lpred rpred])
-    :MinusExpr (let [[_ lexp rexp] boolexpr
+    :MinusExpr (let [[_ lexp rexp] boolexp
                      lpred (preprocess-predicate lexp known-cols)
                      rpred (preprocess-predicate rexp known-cols)]
                  ['- lpred rpred])
-    :PlusExpr (let [[_ lexp rexp] boolexpr
+    :PlusExpr (let [[_ lexp rexp] boolexp
                     lpred (preprocess-predicate lexp known-cols)
                     rpred (preprocess-predicate rexp known-cols)]
                 ['+ lpred rpred])
-    :TimesExpr (let [[_ lexp rexp] boolexpr
+    :TimesExpr (let [[_ lexp rexp] boolexp
                      lpred (preprocess-predicate lexp known-cols)
                      rpred (preprocess-predicate rexp known-cols)]
                  ['* lpred rpred])
-    :DivisionExpr (let [[_ lexp rexp] boolexpr
+    :DivisionExpr (let [[_ lexp rexp] boolexp
                         lpred (preprocess-predicate lexp known-cols)
                         rpred (preprocess-predicate rexp known-cols)]
                     ['<= lpred rpred])
-    :ModExpr (let [[_ lexp rexp] boolexpr
+    :ModExpr (let [[_ lexp rexp] boolexp
                    lpred (preprocess-predicate lexp known-cols)
                    rpred (preprocess-predicate rexp known-cols)]
                ['<= lpred rpred])
-    :NegationExpr (let [[_ exp] boolexpr
+    :NegationExpr (let [[_ exp] boolexp
                         pred (preprocess-predicate exp known-cols)]
                     ['not pred])
-    :FunctionExpr (let [[_ name & args] boolexpr
+    :FunctionExpr (let [[_ name & args] boolexp
                         args (map #(preprocess-predicate % known-cols) args)]
                     (apply vector name args))))
 
