@@ -97,3 +97,29 @@
         (:union :subtraction :intersection :division
                 :cross-product :inner-join :natural-join)
         (binary-recur expression)))))
+
+(defn pprint-raexpression [expression]
+  (case (:type expression)
+    :relation (pp/cl-format true "Relation: ~A~:@_" (:relation expression))
+    (do
+      (pp/cl-format true "~:(~A~)~:@_" (name (:type expression)))
+      (pp/pprint-logical-block
+       :prefix "  "
+       (pp/with-pprint-dispatch pp/simple-dispatch
+         (doseq [[k v] expression]
+           (case k
+             (:predicate :name :old :new :group-columns :relation)
+             (pp/cl-format true "~:(~A~): ~A~:@_" (name k) v)
+             :columns
+             (pp/cl-format true "~:(~A~): ~<~@:{~A -> ~A~:@_~}~:>" (name k) v)
+             :orderings
+             (pp/cl-format true "~:(~A~): ~<~@:{~A ~A~:@_~}~:>" (name k) v)
+             :aggregation
+             (pp/cl-format true "~:(~A~): ~<~@:{~A <- ~A~:@_~}~:>" (name k) v)
+             nil)))
+       (pp/pprint-newline :mandatory)
+       (doseq [v (keep expression [:sub :left :right])
+               :when v]
+         (pp/cl-format true "- ")
+         (pprint-raexpression v)))
+      (pp/cl-format true "~@:_"))))
