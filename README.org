@@ -25,16 +25,14 @@ yarn shadow-cljs watch reljr
 This will serve the debug build of =reljr= at =localhost:3000=. To build the
 release build, use =yarn shadow-cljs release reljr=. The release build can be
 served using e.g. =python -m http.server= from [[file:public/][reljr/public]].
+
+We are also hosting an instance of reljr at =reljr.com=.
 * Using =reljr=
 ** Reading tables
 - =reljr= expects input tables stored as csv files, with a header row.
-- Use =read <filename>= to read a table in the directory from which you launched
-  =reljr=.
+- Use =read= to read a table in.
   + If the filename is =bar.csv=, reljr will store the table in memory as =bar=.
   + If reljr already knows about a table with this name, it will be overwritten.
-- Use =read <filename> as <tablename>= to specify the name =reljr= associates
-  with a table. If the specified name already exists in memory, the table will
-  be overwritten.
 - Table names are /case-sensitive/, so reading =bar.csv= and =Bar.csv= will
   result in two separate tables in memory.
 - Using =store <query> as <name>= will store the table that results from a query
@@ -49,19 +47,12 @@ served using e.g. =python -m http.server= from [[file:public/][reljr/public]].
 - =write <tablename> as <name>= will write out a file to =<name>=, where name
   can be a csv file or an extensionless file. =reljr= doesn't support any other
   file extensions.
-- If a table has two columns with the same name but which are qualified by
-  different tables (e.g. =R.n= and =S.n=) the =write= command will write a csv
-  with duplicate column headers.
 ** Managing in-memory tables
 - You can delete a table from memory with =delete <tablename>=.
-- If you make changes to a table and want to update it within =reljr=, use
+- If you make changes to a table and want to reset it within =reljr=, use
   =read= again.
 - The =list= command will output the names of all currently loaded tables, along
   with each tables' column names.
-- Use =rename <table> to <table>= to change the name of a table in memory. Note
-  that this does not change the qualified name of the table's columns. Renaming
-  a table =foo= with columns =foo.b= and =foo.c= to =bar= yields the table =bar=
-  with those same columns.
 ** Performing queries
 A query can be run on its own after a table load or as part of e.g. the =store=
 command above. Running commands on tables that haven't been loaded into =reljr= is an error.
@@ -98,10 +89,11 @@ tokens =reljr= recognizes for the operation listed after each:
   + Intersection (∩, =intersect=)
   + Union (∪, =union=)
   + Subtraction (=-=, =\\=, =except=)
-  
-** Quitting =reljr=
-Use =quit=.
-   
+Reljr has limited support for expressions in projection (=pi R.x + 1 -> y R=),
+selection (=sigma R.x + 1 > 2 R=) and group by (=gamma a; max(a - b) R=).
+** Preprocess queries
+The =preprocess <query>= and =optimize <query>= can be used to inspect how reljr
+manipulates queries.
 * Implementation Details
 ** Parser
 The grammar for the reljr parser and CLI commands is written in Extended
@@ -132,14 +124,35 @@ precedence:
  3. Intersection
  4. Union, Subtraction
 ** Preprocessor
-** Interpreter
+The preprocessor is used to convert from the raw abstract syntax tree produced
+by our parser into an internal AST fit for later operations. It also performs
+some basic sanity checking on the provided queries- in particular, it checks
+that the operations requested will not have column name collisions.
+** Optimizer
+Reljr implements a simple query optimizer: it optimizes groups of selections,
+cross products, and inner joins into left-deep trees of inner joins on
+selections. The optimizer works in three passes:
+1. Optimize up: Convert inner joins into selections of cross products, move
+   selections to the root of join subtrees and merge them. This is a
+   normalization step, converting any subtree of selections/joins/cross products
+   into a single selection of cross products.
+2. CNF selections: Convert the predicate of each remaining selection into
+   conjunctive normal form
+3. Normalize joins: Convert each selection+cross-product subtree into a
+   left-deep tree of inner joins and cross products by pushing the clauses of
+   the selection condition down the tree. Clauses that only involve one
+   sub-query become selection nodes on the leaves of the join tree. This step
+   could be taught to consider alternate join algorithms or have preferences
+   about selection criteria, but due to time constraints this will have to be
+   left for future work.
+** Table Abstraction/Operations
 The source file [[file:src/reljr/interpreter.clj][interpeter.clj]] deals with the evaluation of relational algebra
 expressions and related computations. However, the functions in this file
 (notably =evaluate=) depend on the table abstraction specified in [[file:src/reljr/table.clj][table.clj]].
 Because of this, it is necessary to discuss the implementation of the functions
 that constitute the table abstraction before discussing the implementation of
 the interpreter itself.
-*** The Table Abstraction
+
 =reljr= stores tables internally as sets of maps. This is a convenient
 representation: sets trivially guarantee uniqueness of tuples and maps keep
 column information close to table data. As an example, consider the table [[example_table][below]].
@@ -158,7 +171,7 @@ structure (assuming the table was read from the file =foo.csv=.)
    #{{:R/x 5 :S/x 6.3 :R/y 6}
      {:R/x 3 :S/x 9.4 :R/y 2}}}
 #+end_src
-**** Project
+*** Project
 
 The =project= function expects to receive two arguments, =table= and =keys=. For the query =pi x,y foo= and the same data structure as [[clojure_table_foo][above]], the arguments are as follows:
 #+begin_src clojure
@@ -174,7 +187,7 @@ the same form as the input (a set of maps) but with only the requested columns:
 #+begin_src clojure
 #{#:R{:x 3, :y 2} #:R{:x 5, :y 6}}
 #+end_src
-**** Select
+*** Select
 
 The =select= function expects to receive a table as we've seen before, as well
 as a =test=, which is a predicate function. The function
@@ -182,13 +195,13 @@ as a =test=, which is a predicate function. The function
 these predicates. With the predicate in hand, =select= filters the tuples in
 =table= using the Clojure built-in =filter=, putting those tuples into a new
 set, and returns.
-**** Rename
+*** Rename
 
 The =rename= function renames a relation. It iterates through every tuple in the
 table, creating a new tuple with the appropriate name. The iteration through
 tuples is necessary because column names are namespaced by the table name, and
 so every table member requires a rename.
-**** Rename-Column
+*** Rename-Column
 
 Rename column works by using the =assoc=/ =dissoc= pair of functions. =dissoc=
 removes a mapping with the given key from a map, while assoc adds one. The
@@ -198,7 +211,7 @@ equivalent to the following expression:
 #+begin_src clojure
 (dissoc (assoc r to (from r)) from)
 #+end_src
-**** Order-Records-By
+*** Order-Records-By
 
 The =order-records-by= function orders the tuples in a =table= based on a set of
 =col-rules=, where each =col-rule= is a pair composed of a namespaced key (a
@@ -222,7 +235,7 @@ arguments are an empty =sorted-set=, whose comparator is now the entire
 =ordering= function. =into= works by taking every member of =table= and adding
 it to the set. When each element gets added, it is placed in the set according
 to the comparator (the =ordering= function).
-**** Group-Records-By
+*** Group-Records-By
 
 The =group-records-by= function returns a new table with the desired columns and
 new columns for any aggregates requested by the user. This function relies on
@@ -246,7 +259,7 @@ The first vector (the keys of this map) is the value for the column we have
 selected on; the function places it into the resulting table later on (inside of
 the =map=.) The key for each vector is a vector of the rows that contained that
 value.
-**** Cross-Product
+*** Cross-Product
 
 We used Clojure's =into= to accomplish this. The outer =into= places the result of
 the =for= into a set. The =for= loop is equivalent to the following for loop in
@@ -258,12 +271,12 @@ for r1 in table1:
 #+end_src
 The result accumulates as the return value of the =for= loop, which is then
 placed into the set by the outer =into= as discussed earlier.
-**** Inner-Join
+*** Inner-Join
 
 The =inner-join= function is implemented in the same manner as =cross-product=,
 but with a test condition applied. The test condition comes from
 [[file:src/reljr/interpreter.clj][=predicate-runner=]] just as it does in =select=.
-**** Natural-Join
+*** Natural-Join
 
 The =natural-join= function is implemented using =project= and =inner-join=,
 where both the test condition for the inner join and the columns to be projected
@@ -348,6 +361,13 @@ than one column that matched columns from the other table, the =tests= list
 would contain a pair of test functions for each pair of columns, and we would
 iterate through all of those with the outer =every?=.
 
-
+** Evaluator
+The evaluator walks the expression tree and performs the corresponding table
+operations as it goes.
   
 * Future Work
+There are a few ways we could improve on Reljr going forward. The simplest being
+improving the surface-level support for more flexible queries. For example, we
+could implement more functions and operators to use in projection/selection
+expressions. Alternately, we could improve the reljr internals: we could add
+support for indexes, or teach the query optimizer about table statistics. 
