@@ -2,8 +2,8 @@
 
  :dependencies [[reagent "1.0.0-rc1" :exclusions [cljsjs/react cljsjs/react-dom]]
                 [instaparse "1.4.10"]
-                [semantic-csv "0.1.0"]
-                [cljs-bean "1.6.0"]]
+                [cljs-bean "1.6.0"]
+                [fipp "0.6.23"]]
 
  :builds {:reljr {:target :browser ; Sets shadow's options for browser-based clients
                   :output-dir "public/js" ; Where shadow compiler output goes
