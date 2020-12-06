@@ -17,3 +17,8 @@ pom.xml.asc
 .auctex-auto/*
 _minted-report/*
 _minted-README/*
+public/js/*
+public/*
+node_modules/*
+resources/public/*
+.shadow-cljs/*

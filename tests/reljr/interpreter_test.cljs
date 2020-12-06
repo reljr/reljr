@@ -1,8 +1,8 @@
 (ns reljr.interpreter-test
-  (:require [clojure.test :as t]
-            [reljr.preprocessor :as rpp]
+  (:require [reljr.preprocessor :as rpp]
             [reljr.interpreter :as i]
-            [reljr.parser :as p]))
+            [reljr.parser :as p])
+  (:require-macros [cljs.test :as t]))
 
 (def table-foo
   {"Foo" #{{:R/x 5 :S/x 6.3 :R/y 6} {:R/x 3 :S/x 9.4 :R/y 2}}})
@@ -87,10 +87,10 @@
                  #:R{:max 1, :b "a"}})))
     (t/testing "avg"
       (t/is (= (evaluate (parse "gamma avg (a) -> avg bar") table-bar)
-               #:R{:avg 19/5}))
+               #:R{:avg (/ 19 5)}))
       (t/is (= (evaluate (parse "gamma b; avg (a) -> avg bar") table-bar)
                #{#:R{:avg 6, :b "e"}
-                 #:R{:avg 9/2, :b "d"}
+                 #:R{:avg (/ 9 2), :b "d"}
                  #:R{:avg 3, :b "c"}
                  #:R{:avg 1, :b "a"}})))
     (t/testing "count"

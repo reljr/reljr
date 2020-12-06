@@ -1,8 +1,6 @@
 (ns reljr.parser
-  (:require [instaparse.core :as insta]))
+  (:require [clojure.java.io :as io]))
 
-(def full-relational-algebra-parser
-  (insta/parser (clojure.java.io/resource "RAParser.bnf")))
-
-(defn relational-algebra-parser [text]
-  (full-relational-algebra-parser text :start :RAExpression))
+;; this is a macro because of cljs not having access to clojure.java.io at runtime
+(defmacro read-bnf-file []
+  (slurp (io/resource "RAParser.bnf")))

@@ -1,0 +1,23 @@
+{:source-paths ["src" "resources" "tests"]
+
+ :dependencies [[reagent "1.0.0-rc1" :exclusions [cljsjs/react cljsjs/react-dom]]
+                [instaparse "1.4.10"]
+                [semantic-csv "0.1.0"]
+                [cljs-bean "1.6.0"]]
+
+ :builds {:reljr {:target :browser ; Sets shadow's options for browser-based clients
+                  :output-dir "public/js" ; Where shadow compiler output goes
+                  :asset-path "js" ; The relative path from the web-server's root to the resources in :output-dir
+                ; Modules configure bundling
+                ; so module :main will generate main.js in :output-dir
+                ; :init-fn is the fully-qualified name that will run when the module is loaded
+                  :modules {:main {:init-fn reljr.frontend/main}}
+                ; Enables the optional server
+                ; Will hot reload everything, including CSS
+                  :devtools {:http-root "public"
+                             :http-port 3000}}
+
+          :test {:target :browser-test
+                 :test-dir "resources/public/js/test"
+                 :devtools {:http-port 8021
+                            :http-root "resources/public/js/test"}}}}

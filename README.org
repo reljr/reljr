@@ -16,25 +16,18 @@ language to satisfy the requirements for Project Four in the Fall 2020 session
 of the Advanced Databases course offered at USF, under the instruction of [[https://www.csee.usf.edu/~tuy/][Dr.
 Tu]].
 * Getting =reljr=
-After cloning the =reljr= repository, it can be started with =clojure -m
-reljr.repl= from the top-level =reljr= directory. Alternatively, a jar can be
-constructed:
-#+begin_src shell
-clj -Spom
-clj -Xuberjar
+After cloning the =reljr= repository, install [[https://classic.yarnpkg.com/en/docs/install/][yarn]].
+From the main =reljr= directory:
+#+begin_src term
+yarn install
+yarn shadow-cljs watch reljr
 #+end_src
-Afterwards, the jar can be run with =java -jar target/uberjar/reljr.jar=.
-=reljr= was developed and tested under Clojure version 1.10.0 and version
-1.8.0_ 265 of OpenJDK.
+This will serve the debug build of =reljr= at =localhost:3000=. To build the
+release build, use =yarn shadow-cljs release reljr=. The release build can be
+served using e.g. =python -m http.server= from [[file:public/][reljr/public]].
 * Using =reljr=
 ** Reading tables
-- =reljr= expects input tables stored as csv files, with a header row. The headers can be written in one of two ways:
-  + =<header>=, i.e. just a string
-  + =<header>:<type>=, a string, then a colon, then (optionally) one of the
-    following data types. If a data type is not provided, =reljr= treats the
-    items in that column as strings.
-    - =number= (floats)
-    - =string=
+- =reljr= expects input tables stored as csv files, with a header row.
 - Use =read <filename>= to read a table in the directory from which you launched
   =reljr=.
   + If the filename is =bar.csv=, reljr will store the table in memory as =bar=.
@@ -43,23 +36,35 @@ Afterwards, the jar can be run with =java -jar target/uberjar/reljr.jar=.
   with a table. If the specified name already exists in memory, the table will
   be overwritten.
 - Table names are /case-sensitive/, so reading =bar.csv= and =Bar.csv= will
-  result in two separate tables.
+  result in two separate tables in memory.
 - Using =store <query> as <name>= will store the table that results from a query
   (see [[Performing queries][below]]) with the given name. As always, if the name exists, the table will
   be overwritten. =store= will rename all the columns to use the new relation
   name as by the rename operator. 
 - =reljr= assumes that every column in the table shares the same qualifier
   (i.e., columns =S.n= and =R.n= can't be read in from the same file.)
+** Writing tables
+- To write a table out to a file, use =write <tablename>=. This command launches
+  a file download dialogue.
+- =write <tablename> as <name>= will write out a file to =<name>=, where name
+  can be a csv file or an extensionless file. =reljr= doesn't support any other
+  file extensions.
+- If a table has two columns with the same name but which are qualified by
+  different tables (e.g. =R.n= and =S.n=) the =write= command will write a csv
+  with duplicate column headers.
 ** Managing in-memory tables
 - You can delete a table from memory with =delete <tablename>=.
 - If you make changes to a table and want to update it within =reljr=, use
   =read= again.
 - The =list= command will output the names of all currently loaded tables, along
   with each tables' column names.
+- Use =rename <table> to <table>= to change the name of a table in memory. Note
+  that this does not change the qualified name of the table's columns. Renaming
+  a table =foo= with columns =foo.b= and =foo.c= to =bar= yields the table =bar=
+  with those same columns.
 ** Performing queries
 A query can be run on its own after a table load or as part of e.g. the =store=
-command above. If a table does not exist, it is treated as if it were an empty
-table. The result of such a query is an empty table.
+command above. Running commands on tables that haven't been loaded into =reljr= is an error.
 
 =reljr= supports the following types of relational algebra queries, with the
 tokens =reljr= recognizes for the operation listed after each:
@@ -94,16 +99,9 @@ tokens =reljr= recognizes for the operation listed after each:
   + Union (∪, =union=)
   + Subtraction (=-=, =\\=, =except=)
   
-** Writing tables
-- To write a table out to a file, use =write <tablename>=. This will create a
-  file =<tablename>.csv= in the same directory as =reljr=.
-- =write <tablename> as <name>= will write out a file to =<name>=, where name
-  can be a csv file or an extensionless file. =reljr= doesn't support any other
-  file extensions.
-- =write= will overwrite any files with the same name.
-- If a table has two columns with the same name but which are qualified by different tables (e.g. =R.n= and =S.n=) the =write= command will write a csv with duplicate column headers. 
 ** Quitting =reljr=
 Use =quit=.
+   
 * Implementation Details
 ** Parser
 The grammar for the reljr parser and CLI commands is written in Extended
