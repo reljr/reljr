@@ -21,3 +21,4 @@ public/js/*
 node_modules/*
 resources/public/*
 .shadow-cljs/*
+out/*
