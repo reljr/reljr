@@ -29,7 +29,6 @@ RAExpression precedence:
 
 <Command>                    = ReadCommand       /
                                StoreAsCommand    /
-                               RenameCommand     /
                                DeleteCommand     /
                                WriteCommand      /
                                WriteAsCommand    /
