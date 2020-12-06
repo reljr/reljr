@@ -19,14 +19,13 @@ jobs:
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
-      - uses: borales/actions-yarn@v2.0.0
       - name: Build reljr for release
-        run: |
-          yarn install
-          yarn shadow-cljs release reljr
-
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v1
+        with:
+         node-version: '12'
+      - run: yarn install
+      - run: yarn shadow-cljs release reljr
       - name: Copying files to server
         uses: appleboy/scp-action@master
         with:
