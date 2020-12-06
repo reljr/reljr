@@ -28,7 +28,6 @@ RAExpression precedence:
 *)
 
 <Command>                    = ReadCommand       /
-                               ReadAsCommand     /
                                StoreAsCommand    /
                                RenameCommand     /
                                DeleteCommand     /
@@ -37,10 +36,10 @@ RAExpression precedence:
                                ListCommand       /
                                QuitCommand       /
                                PreprocessCommand /
+                               OptimizeCommand   /
                                QueryCommand
 
-ReadCommand                  = <"read"> <whitespace> filename
-ReadAsCommand                = <"read"> <whitespace> filename <whitespace> <"as"> relation_name
+ReadCommand                  = <"read">
 StoreAsCommand               = <"store"> <whitespace> RAExpression <whitespace> <"as"> relation_name
 RenameCommand                = <"rename"> <whitespace> relation_name <whitespace> <"to"> <whitespace> relation_name
 DeleteCommand                = <"delete"> <whitespace> relation_name
@@ -49,15 +48,10 @@ WriteAsCommand               = <"write"> <whitespace> relation_name <whitespace>
 ListCommand                  = <"list">
 QuitCommand                  = <"quit">
 PreprocessCommand            = <"preprocess"> RAExpression
+OptimizeCommand              = <"optimize"> RAExpression
 QueryCommand                 = RAExpression
 
-<RAExpression>               = Projection                              |
-                               Selection                               |
-                               RenameRelation                          |
-                               RenameColumn                            |
-                               OrderBy                                 |
-                               GroupBy                                 |
-                               LowPrecedenceBinOp
+<RAExpression>               = LowPrecedenceBinOp
 
 <LowPrecedenceBinOp>         = Union | Subtraction | MidPrecedenceBinOp
 
@@ -65,13 +59,20 @@ QueryCommand                 = RAExpression
 
 <HighPrecedenceBinOp>        = CrossProduct | InnerJoin | NaturalJoin | Division | BinOpLeaf
 
-<BinOpLeaf>                  = relation_name | <lpar> RAExpression <rpar>
+<BinOpLeaf>                  = relation_name              |
+                               <lpar> RAExpression <rpar> |
+                               Projection                 |
+                               Selection                  |
+                               RenameRelation             |
+                               RenameColumn               |
+                               OrderBy                    |
+                               GroupBy
 
 (*;;;;;;;;;;;;;;;;;;;;
   ; unary operations ;
   ;;;;;;;;;;;;;;;;;;;;*)
 
-Projection                   = <projection_token> ProjectionBody RAExpression
+Projection                   = <projection_token> ProjectionBody BinOpLeaf
 
 <ProjectionColumn>           = Column / ExprColumn
 <ProjectionBody>             = ProjectionColumn                                     |
@@ -82,7 +83,7 @@ projection_token             = "π" | "pi" | "project" | <whitespace> <projectio
 
 
 
-Selection                    = <selection_token> ValueExpression RAExpression
+Selection                    = <selection_token> ValueExpression BinOpLeaf
 
 selection_token              = "σ" | "sigma" | "select" | <whitespace> <selection_token> <whitespace>
 
@@ -92,12 +93,12 @@ selection_token              = "σ" | "sigma" | "select" | <whitespace> <selecti
 
 rename_token                 = "ρ" | "rho" | "rename" | <whitespace> <rename_token> <whitespace>
 
-RenameRelation               = <rename_token> relation_name RAExpression
+RenameRelation               = <rename_token> relation_name BinOpLeaf
 
 
 
 
-RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RAExpression
+RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> BinOpLeaf
 
 (* either a column name to column name (CTC) relationship or a CTC followed by a comma.*)
 <ColToColOrCTCComma>         = Column <right_arrow> name |
@@ -106,7 +107,7 @@ RenameColumn                 = <rename_token> ColToColOrCTCComma <whitespace> RA
 
 
 
-OrderBy                      = <order_by_token> DirectionalColumn RAExpression
+OrderBy                      = <order_by_token> DirectionalColumn BinOpLeaf
 
 order_by_token               = "τ" | "tau" | "order by" | <whitespace> <order_by_token> <whitespace>
 
@@ -123,8 +124,8 @@ desc                         = "desc" | "DESC" | <whitespace> <desc> <whitespace
 
 
 
-GroupBy                      = <group_by_token> Aggregate <whitespace> RAExpression |
-                               <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> RAExpression
+GroupBy                      = <group_by_token> Aggregate <whitespace> BinOpLeaf |
+                               <group_by_token> ColumnOrColumnComma <semicolon> Aggregate <whitespace> BinOpLeaf
 
 group_by_token               = "γ" | "gamma" | "group by" | <whitespace> <group_by_token> <whitespace>
 

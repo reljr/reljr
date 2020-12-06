@@ -1,6 +1,7 @@
 (ns reljr.expression-utilities
   (:require [clojure.set :as set]
-            [clojure.pprint :as pp]))
+            [clojure.pprint :as pp]
+            [fipp.engine :as fipp]))
 
 (defn and-raw-cnfs [cnf1 cnf2]
   (set/union cnf1 cnf2))
@@ -80,15 +81,15 @@
     (letfn [(recursor [expression]
               (raexpression-walker expression prefn postfn))
             (unary-recur [expression]
-              (postfn (update expression :sub recursor)))
+                         (postfn (update expression :sub recursor)))
             (binary-recur [expression]
-              (let [c (count expression)]
-                (-> expression
-                    transient
-                    (assoc! :left (recursor (:left expression)))
-                    (assoc! :right (recursor (:right expression)))
-                    persistent!
-                    postfn)))]
+                          (let [c (count expression)]
+                            (-> expression
+                                transient
+                                (assoc! :left (recursor (:left expression)))
+                                (assoc! :right (recursor (:right expression)))
+                                persistent!
+                                postfn)))]
       (case (:type expression)
         :relation (postfn (prefn expression))
         (:projection :selection :rename-relation
@@ -100,30 +101,28 @@
 
 (defn pprint-raexpression* [expression]
   (case (:type expression)
-    :relation (pp/cl-format true "Relation: ~A~:@_" (:relation expression))
-    (do
-      (pp/cl-format true "~:(~A~)~:@_" (name (:type expression)))
-      (pp/pprint-logical-block
-       :prefix "  "
-       (pp/with-pprint-dispatch pp/simple-dispatch
-         (doseq [[k v] expression]
-           (case k
-             (:predicate :name :old :new :group-columns :relation)
-             (pp/cl-format true "~:(~A~): ~A~:@_" (name k) v)
-             :columns
-             (pp/cl-format true "~:(~A~): ~<~@:{~A -> ~A~:@_~}~:>" (name k) v)
-             :orderings
-             (pp/cl-format true "~:(~A~): ~<~@:{~A ~A~:@_~}~:>" (name k) v)
-             :aggregation
-             (pp/cl-format true "~:(~A~): ~<~@:{~A <- ~A~:@_~}~:>" (name k) v)
-             nil)))
-       (pp/pprint-newline :mandatory)
-       (doseq [v (keep expression [:sub :left :right])
-               :when v]
-         (pp/cl-format true "- ")
-         (pprint-raexpression* v)))
-      (pp/cl-format true "~@:_"))))
+    :relation [:span "Relation: " (str (:relation expression)) :break]
+    [:align
+     (str (name (:type expression))) ":"
+     :break
+     [:nest
+      (for [[k v] expression]
+        (case k
+          (:predicate :name :old :new :group-columns :relation)
+          [:span (str (name k)) ": " (str v) :break]
+          :columns
+          [:span (str (name k)) ": "
+           [:align (for [[a b] v] [:span (str a) " -> " (str b) :break])]]
+          :orderings
+          [:span (str (name k)) ": "
+           [:align (for [[a b] v] [:span (str a) " " (str b) :break])]]
+          :aggregation
+          [:span (str (name k)) ": "
+           [:align (for [[a b] v] [:span (str a) " <- " (str b) :break])]]
+          nil))
+      (for [v (keep expression [:sub :left :right])
+            :when v]
+        [:span "- " (pprint-raexpression* v)])]]))
 
 (defn pprint-raexpression [expression]
-  (pp/with-pprint-dispatch pprint-raexpression*
-    (pp/pprint expression)))
+  (fipp/pprint-document (pprint-raexpression* expression) {:width 80}))

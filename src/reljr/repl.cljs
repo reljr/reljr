@@ -5,6 +5,8 @@
             [reljr.interpreter :as interp]
             [reljr.parser :as parser]
             [reljr.preprocessor :as rpp]
+            [reljr.optimizer :as opti]
+            [reljr.expression-utilities :as eutils]
             [cljs.pprint :as pp]))
 
 (defn print-tables [tables]
@@ -27,15 +29,18 @@
             tables @fstate/all-tables]
         (case (first input)
           :ReadCommand (file/csv-dialog)
-          :ReadAsCommand (;;TODO
-                          )
           :StoreAsCommand (try
                             (swap! fstate/all-tables merge
                                    (assoc tables
                                           (nth input 2)
                                           (interp/evaluate
-                                           (first (rpp/preprocess-query (nth input 1)
-                                                                        tables))
+                                           (opti/optimize
+                                            (rpp/preprocess-query
+                                             [:RenameRelation
+                                              (nth input 2)
+                                              (nth input 1)]
+                                             tables)
+                                            tables)
                                            tables)))
                             (catch js/Error e
                               (reset! fstate/main-result (ex-message e))))
@@ -55,15 +60,27 @@
           :PreprocessCommand (reset! fstate/main-result
                                      (with-out-str
                                        (try
-                                         (print (rpp/preprocess-query (nth input 1) tables))
+                                         (eutils/pprint-raexpression
+                                          (rpp/preprocess-query (nth input 1) tables))
                                          (catch js/Error e
                                            (println (str (ex-message e)))))))
+          :OptimizeCommand (reset! fstate/main-result
+                                   (with-out-str
+                                     (try
+                                       (eutils/pprint-raexpression
+                                        (opti/optimize
+                                         (rpp/preprocess-query (nth input 1) tables)
+                                         tables))
+                                       (catch js/Error e
+                                         (println (str (ex-message e)))))))
           :QueryCommand (reset! fstate/main-result
                                 (with-out-str
                                   (try
                                     (pp/print-table
                                      (interp/evaluate
-                                      (first (rpp/preprocess-query (nth input 1) tables))
+                                      (opti/optimize
+                                       (rpp/preprocess-query (nth input 1) tables)
+                                       tables)
                                       tables))
                                     (catch js/Error e
                                       (println (str (ex-message e))))))))))))
