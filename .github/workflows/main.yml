@@ -40,5 +40,5 @@ jobs:
           username: ${{ secrets.REMOTE_USER }}
           password: ${{ secrets.REMOTE_USER_PASSWORD }}
           rm: true
-          source: "public/"
+          source: "public/*"
           target: "${{ secrets.REMOTE_DIR }}"
