@@ -1,5 +1,5 @@
 (ns reljr.aggregates-test
-  (:require  [cljs.test :refer-macros [deftest is testing run-tests]]
+  (:require  [cljs.test :refer-macros [deftest is]]
              [reljr.aggregates :as a]))
 
 (def some-table
@@ -8,15 +8,13 @@
     {:R/a 2 :R/b 5 :R/c 1}})
 
 (deftest RAAggregateMin
-  (is (= (a/mincol some-table :R/b)
-         2)))
+  (is (= 2 (a/mincol some-table :R/b))))
 
 (deftest RAAggregateMax
-  (is (= (a/maxcol some-table :R/c)
-         3)))
+  (is (= 3 (a/maxcol some-table :R/c))))
 
 (deftest RAAggregateSum
-  (is (= (a/sum some-table :R/a) 4)))
+  (is (= 4 (a/sum some-table :R/a))))
 
 (deftest RAAggregateAvg
-  (is (= (a/avg some-table :R/b) (/ 14 3))))
+  (is (= (/ 14 3) (a/avg some-table :R/b))))
