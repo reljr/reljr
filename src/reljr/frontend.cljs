@@ -29,20 +29,23 @@
 (defn app []
   [:div
    [:h1 "reljr"]
-   [:h2
-    [:a {:href  "https://github.com/LucianoLaratelli/reljr/blob/main/README.org"}
+   [:h3
+    [:a {:href "https://github.com/reljr/reljr/blob/main/README.org"}
      "Documentation"]]
-   [:pre.repl {:id "repl-output"}
+   [:h3
+    [:a {:href "https://github.com/reljr/reljr/blob/main/README.org"}
+     "GitHub"]]
+   [:div.repl
+    [:pre.repl {:id "repl-output"}
 
-    [:p @fstate/repl-result]
-    [:p @fstate/file-data]]
-
-   [:input.repl {:placeholder "reljr> "
-                 :id "repl-input"
-                 :onKeyDown #(let [key (.-key %)]
-                               (case key
-                                 "Enter" (handle-enter)
-                                 ()))}]])
+     [:p @fstate/repl-result]
+     [:p @fstate/file-data]]
+    [:input.repl {:placeholder "reljr> "
+                  :id "repl-input"
+                  :onKeyDown #(let [key (.-key %)]
+                                (case key
+                                  "Enter" (handle-enter)
+                                  ()))}]]])
 
 (defn ^:export main
   []
