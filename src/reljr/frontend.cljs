@@ -7,11 +7,19 @@
 (def command-history (r/atom []))
 (def history-position (r/atom -1))
 
+(defn new-repl-result []
+  [:div
+   @fstate/repl-result
+   (str "reljr> " @fstate/current-line)
+   "\n"
+   @fstate/main-result
+   "\n"])
+
 (defn handle-enter []
   (reset! fstate/current-line (.-value (.getElementById js/document "repl-input")))
   (set! (.-value (.getElementById js/document "repl-input")) "")
   (repl/web-main)
-  (swap! fstate/repl-result str "\n" (str "reljr> " @fstate/current-line) "\n" @fstate/main-result)
+  (reset! fstate/repl-result (new-repl-result))
   (swap! command-history conj @fstate/current-line)
   (swap! history-position inc)
   (reset! fstate/current-line nil)
@@ -29,17 +37,11 @@
 (defn app []
   [:div
    [:h1 "reljr"]
-   [:h3
-    [:a {:href "https://github.com/reljr/reljr/blob/main/README.org"}
-     "Documentation"]]
-   [:h3
-    [:a {:href "https://github.com/reljr/reljr/blob/main/README.org"}
-     "GitHub"]]
+   [:br]
    [:div.repl
     [:pre.repl {:id "repl-output"}
-
-     [:p @fstate/repl-result]
-     [:p @fstate/file-data]]
+     @fstate/repl-result
+     @fstate/file-data]
     [:input.repl {:placeholder "reljr> "
                   :id "repl-input"
                   :onKeyDown #(let [key (.-key %)]
