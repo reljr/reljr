@@ -27,13 +27,18 @@
     {name (into #{} (for [row rows]
                       (into {} (map hash-map headers row))))}))
 
+(defn read-repl-result [file]
+  [:div
+   @fstate/repl-result
+   "read file " file "\n\n"])
+
 (defn upload-callback [name jsdata]
   (->> jsdata
        ->clj
        :data
        (make-table (first (s/split name #"\.")))
        (swap! fstate/all-tables merge))
-  (swap! fstate/repl-result str "\nread file " name "\n"))
+  (reset! fstate/repl-result (read-repl-result name)))
 
 (defn csv-dialog-callback [event]
   (when-let [file (->> event
